@@ -3,5 +3,5 @@ requests
 python-dotenv
 psycopg2-binary
 djangorestframework
-djangorestframework-simplejwt
-corseheaders
+djangorestframework-simplejwt>=5.5.1
+django-cors-headers
