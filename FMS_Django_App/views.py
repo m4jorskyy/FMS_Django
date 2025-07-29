@@ -2,7 +2,8 @@
 from datetime import datetime, timedelta
 import jwt
 from django.conf import settings
-from django.contrib.auth.hashers import check_password
+from django.db.models import Case, When, Value, IntegerField
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from .serializers import UserSerializer, PlayerSerializer, LoginSerializer, PostSerializer, MatchParticipationSerializer
@@ -16,7 +17,6 @@ PUT → put() method (update)
 PATCH → patch() method (partial update)
 DELETE → delete() method (destroy)
 """
-
 
 # Create your views here.
 class UserListView(generics.ListAPIView):
@@ -35,9 +35,19 @@ class UserDetailView(generics.RetrieveAPIView):
 
 
 class PlayerListView(generics.ListAPIView):
-    queryset = Player.objects.all()
+    queryset = Player.objects.all().annotate(
+        lane_order=Case(
+            When(lane='Toplane', then=Value(0)),
+            When(lane='Jungle', then=Value(1)),
+            When(lane='Midlane', then=Value(2)),
+            When(lane='Botlane', then=Value(3)),
+            When(lane='Support', then=Value(4)),
+            default=Value(5),
+            output_field=IntegerField()
+        )
+    ).order_by('lane_order', 'id')
     serializer_class = PlayerSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
 
 class PlayerDetailView(generics.RetrieveAPIView):
@@ -104,10 +114,16 @@ class CreatePostView(generics.CreateAPIView):
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
 
+class MatchPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = 'page_size'
+    max_page_size = 20
+
 class ListMatchesView(generics.ListAPIView):
     serializer_class = MatchParticipationSerializer
     permission_classes = [AllowAny]
     lookup_field = 'nick'
+    pagination_class = MatchPagination
 
     def get_queryset(self):
         nick = self.kwargs['nick']

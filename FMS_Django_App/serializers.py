@@ -7,7 +7,7 @@ from .models import Player, User, Post, Match, MatchParticipation
 class PlayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
-        fields = ['first_name', 'last_name', 'nick',  'lane', 'champion', 'team_role']
+        fields = ['id', 'first_name', 'last_name', 'nick',  'lane', 'champion', 'team_role']
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
