@@ -1,0 +1,6 @@
+Django==5.2.4
+requests
+python-dotenv
+psycopg2-binary
+djangorestframework
+djangorestframework-simplejwt
