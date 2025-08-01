@@ -60,7 +60,11 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'FMS_Django_Init.urls'
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # frontend Vite
+]
 
 TEMPLATES = [
     {
@@ -93,6 +97,8 @@ DATABASES = {
         'PORT': '5432'
     }
 }
+
+CSRF_COOKIE_NAME = "csrftoken"
 
 REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,

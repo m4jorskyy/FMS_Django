@@ -3,10 +3,13 @@ from datetime import datetime, timedelta
 import jwt
 from django.conf import settings
 from django.db.models import Case, When, Value, IntegerField
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from .serializers import UserSerializer, PlayerSerializer, LoginSerializer, PostSerializer, MatchParticipationSerializer
+from .serializers import UserSerializer, PlayerSerializer, LoginSerializer, PostSerializer, \
+    MatchParticipationSerializer, RegisterSerializer
 from rest_framework import generics, status
 from .models import User, Player, Post, SummonerName, MatchParticipation
 
@@ -58,10 +61,11 @@ class PlayerDetailView(generics.RetrieveAPIView):
     def get_queryset(self):
         return Player.objects.all()
 
+@method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
+    serializer_class = RegisterSerializer
+    permission_classes = [AllowAny]
 
 class LoginView(generics.CreateAPIView):
     serializer_class = LoginSerializer
