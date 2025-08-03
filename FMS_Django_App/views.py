@@ -8,8 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from .serializers import UserSerializer, PlayerSerializer, LoginSerializer, PostSerializer, \
-    MatchParticipationSerializer, RegisterSerializer
+from .serializers import UserSerializer, PlayerSerializer, LoginSerializer, PostSerializer, MatchParticipationSerializer, RegisterSerializer
 from rest_framework import generics, status
 from .models import User, Player, Post, SummonerName, MatchParticipation
 
@@ -80,11 +79,10 @@ class LoginView(generics.CreateAPIView):
         try:
             user = User.objects.get(nick=nick)
 
-            now = datetime.now()
-            expire = datetime.now() + timedelta(hours=24)
+            if user.check_password(password):
+                now = datetime.now()
+                expire = datetime.now() + timedelta(hours=24)
 
-
-            if password == user.password:
                 payload = {
                     'id': user.id,
                     'nick': user.nick,

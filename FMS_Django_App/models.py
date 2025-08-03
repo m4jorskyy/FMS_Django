@@ -1,24 +1,42 @@
+from django.contrib.auth.base_user import BaseUserManager
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
 from django.utils import timezone
 
 
 # Create your models here.
 
-class User(models.Model):
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
+class CustomUserManager(BaseUserManager):
+    def create_user(self, nick, email, password=None, **extra_fields):
+        if not nick:
+            raise ValueError('Nick jest wymagany')
+        if not email:
+            raise ValueError('Email jest wymagany')
+
+        email = self.normalize_email(email)
+        user = self.model(nick=nick, email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, nick, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('role', 'ADMIN')  # lub jakąś rolę admin
+
+        return self.create_user(nick, email, password, **extra_fields)
+
+class User(AbstractUser):
     nick = models.CharField(max_length=255, unique=True)
-    email = models.CharField(max_length=255, unique=True)
-    password = models.CharField(max_length=255)
     role = models.CharField(max_length=255, default="USER")
+    username = None
+    USERNAME_FIELD = 'nick'
+    REQUIRED_FIELDS = ['email']
+
+    objects = CustomUserManager()
 
     def __str__(self):
         return self.nick
-
-    @property
-    def is_authenticated(self):
-        return True
-
 
 class Player(models.Model):
     first_name = models.CharField(max_length=255)

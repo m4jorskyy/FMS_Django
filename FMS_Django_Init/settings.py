@@ -57,6 +57,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
 
+AUTH_USER_MODEL="FMS_Django_App.User"
 
 ROOT_URLCONF = 'FMS_Django_Init.urls'
 
