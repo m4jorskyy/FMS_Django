@@ -64,7 +64,8 @@ ROOT_URLCONF = 'FMS_Django_Init.urls'
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # frontend Vite
+    "http://localhost:5173",
+    "http://localhost:5174"
 ]
 
 TEMPLATES = [
