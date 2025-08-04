@@ -78,7 +78,7 @@ class Command(BaseCommand):
                             deaths=p["deaths"],
                             assists=p["assists"],
                             win=p["win"],
-                            lane=p["lane"]
+                            lane=p["teamPosition"]
                         )
                         new_parts += 1
                     except SummonerName.DoesNotExist:
