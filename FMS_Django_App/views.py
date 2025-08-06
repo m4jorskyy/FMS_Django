@@ -109,10 +109,16 @@ class LoginView(generics.CreateAPIView):
                 'error': 'Invalid credentials'
             }, status=status.HTTP_401_UNAUTHORIZED)
 
+class PostPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = 'page_size'
+    max_page_size = 20
+
 class PostsView(generics.ListAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [AllowAny]
+    pagination_class = PostPagination
 
 class CreatePostView(generics.CreateAPIView):
     queryset = Post.objects.all()

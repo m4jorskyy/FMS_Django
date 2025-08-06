@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Player, SummonerName, Match, User, MatchParticipation, Post
+from .models import Player, SummonerName, Match, User, MatchParticipation, Post, Newsletter
 
 
 # Register your models here.
@@ -31,4 +31,8 @@ class UsersAdmin(admin.ModelAdmin):
 
 @admin.register(Post)
 class PostsAdmin(admin.ModelAdmin):
-    list_display = ('author', 'title', 'text', 'date')
+    list_display = ('id', 'author', 'title', 'text', 'date')
+
+@admin.register(Newsletter)
+class NewsletterAdmin(admin.ModelAdmin):
+    list_display = ('email', 'created_at')
