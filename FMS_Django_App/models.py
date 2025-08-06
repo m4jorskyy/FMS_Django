@@ -78,3 +78,7 @@ class Post(models.Model):
     title = models.TextField()
     text = models.CharField(max_length=255)
     date = models.DateTimeField(auto_now_add=True)
+
+class Newsletter(models.Model):
+    email = models.EmailField(max_length=255)
+    created_at=models.DateTimeField(auto_now_add=True)

@@ -8,9 +8,10 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from .serializers import UserSerializer, PlayerSerializer, LoginSerializer, PostSerializer, MatchParticipationSerializer, RegisterSerializer
+from .serializers import UserSerializer, PlayerSerializer, LoginSerializer, PostSerializer, \
+    MatchParticipationSerializer, RegisterSerializer, NewsletterSerializer
 from rest_framework import generics, status
-from .models import User, Player, Post, SummonerName, MatchParticipation
+from .models import User, Player, Post, SummonerName, MatchParticipation, Newsletter
 
 """
 GET → get() method (list/retrieve)
@@ -133,3 +134,8 @@ class ListMatchesView(generics.ListAPIView):
         summoner_names = SummonerName.objects.filter(player=player)
         match_participations = MatchParticipation.objects.filter(summoner__in=summoner_names)
         return match_participations.select_related('match').order_by('-match__game_start')
+
+class CreateNewsletterView(generics.CreateAPIView):
+    queryset = Newsletter.objects.all()
+    serializer_class = NewsletterSerializer
+    permission_classes = [AllowAny]

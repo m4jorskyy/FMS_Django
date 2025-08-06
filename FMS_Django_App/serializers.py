@@ -1,7 +1,7 @@
 #serializers.py
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
-from .models import Player, User, Post, Match, MatchParticipation
+from .models import Player, User, Post, Match, MatchParticipation, Newsletter
 
 
 class PlayerSerializer(serializers.ModelSerializer):
@@ -62,3 +62,8 @@ class MatchParticipationSerializer(serializers.ModelSerializer):
     class Meta:
         model = MatchParticipation
         fields = ['match', 'summoner', 'champion', 'kills', 'deaths', 'assists', 'win', 'lane']
+
+class NewsletterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Newsletter
+        fields = ['email']
