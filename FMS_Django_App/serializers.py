@@ -42,9 +42,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 class PostSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='nick'
+    )
+
     class Meta:
         model = Post
-        fields = ['title', 'text', 'date']
+        fields = ['title', 'text', 'date', 'author']
 
     def create(self, validated_data):
         validated_data['author'] = self.context['request'].user

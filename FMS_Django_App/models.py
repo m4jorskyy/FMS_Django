@@ -75,8 +75,8 @@ class MatchParticipation(models.Model):
 
 class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
-    title = models.TextField()
-    text = models.CharField(max_length=255)
+    title = models.CharField(max_length=255)
+    text = models.TextField()
     date = models.DateTimeField(auto_now_add=True)
 
 class Newsletter(models.Model):

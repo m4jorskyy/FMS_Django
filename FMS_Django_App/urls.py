@@ -4,6 +4,7 @@ from . import views
 urlpatterns = [
     path('users/', views.UserListView.as_view(), name='user_list'),
     path('users/<str:nick>/', views.UserDetailView.as_view(), name='user_detail'),
+    path('users/me/posts/', views.ListUserPostsView.as_view(), name='user_posts'),
     path('players/', views.PlayerListView.as_view(), name='player_list'),
     path('players/<str:nick>/', views.PlayerDetailView.as_view(), name='player_detail'),
     path('players/<str:nick>/matches/', views.ListMatchesView.as_view(), name='player_matches'),
@@ -11,5 +12,7 @@ urlpatterns = [
     path('login/', views.LoginView.as_view(), name='login'),
     path('posts/', views.PostsView.as_view(), name='posts'),
     path('posts/create/', views.CreatePostView.as_view(), name='create_post'),
+    path('posts/edit/<int:pk>/', views.UpdatePostView.as_view(), name='update_post'),
+    path('posts/delete/<int:pk>/', views.DestroyPostView.as_view(), name='delete_post'),
     path('newsletter/', views.CreateNewsletterView.as_view(), name='sign_to_newsletter')
 ]

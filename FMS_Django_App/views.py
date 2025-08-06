@@ -5,8 +5,9 @@ from django.conf import settings
 from django.db.models import Case, When, Value, IntegerField
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from .serializers import UserSerializer, PlayerSerializer, LoginSerializer, PostSerializer, \
     MatchParticipationSerializer, RegisterSerializer, NewsletterSerializer
@@ -25,7 +26,7 @@ DELETE → delete() method (destroy)
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
 
 class UserDetailView(generics.RetrieveAPIView):
@@ -95,7 +96,8 @@ class LoginView(generics.CreateAPIView):
 
                 return Response({
                     'nick': user.nick,
-                    'token': token
+                    'token': token,
+                    'role': user.role
                 }, status=status.HTTP_200_OK)
             else:
                 return Response({
@@ -116,6 +118,36 @@ class CreatePostView(generics.CreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
+
+class UpdatePostView(generics.UpdateAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+
+    def get_object(self):
+        obj = super().get_object()
+
+        if not(self.request.user == obj.author or self.request.user.is_staff):
+            raise PermissionDenied("You don't have permission to do that!")
+
+        return obj
+
+class DestroyPostView(generics.DestroyAPIView):
+    queryset = Post.objects.all()
+
+    def get_object(self):
+        obj = super().get_object()
+
+        if not(self.request.user == obj.author or self.request.user.is_staff):
+            raise PermissionDenied("You don't have permission to do that!")
+
+        return obj
+
+class ListUserPostsView(generics.ListAPIView):
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Post.objects.filter(author=self.request.user)
 
 class MatchPagination(PageNumberPagination):
     page_size = 5
