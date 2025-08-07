@@ -80,5 +80,5 @@ class Post(models.Model):
     date = models.DateTimeField(auto_now_add=True)
 
 class Newsletter(models.Model):
-    email = models.EmailField(max_length=255)
+    email = models.EmailField(max_length=255, unique=True)
     created_at=models.DateTimeField(auto_now_add=True)
