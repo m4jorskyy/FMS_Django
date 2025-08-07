@@ -1,11 +1,16 @@
 # views.py
 from datetime import datetime, timedelta
+from http.client import responses
+from logging import raiseExceptions
+
 import jwt
 from django.conf import settings
 from django.db.models import Case, When, Value, IntegerField
+from django.http import Http404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.exceptions import PermissionDenied
+from httpx import ResponseNotRead
+from rest_framework.exceptions import PermissionDenied, NotFound
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
@@ -22,13 +27,58 @@ PATCH → patch() method (partial update)
 DELETE → delete() method (destroy)
 """
 
+
 # Create your views here.
+
+# GET  /api/users/              → lista użytkowników (admin only)
+class UserPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = 'page_size'
+    max_page_size = 20
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
+    pagination_class = UserPagination
 
 
+# POST /api/users/create/       → tworzenie nowego użytkownika (admin only)
+class CreateUserView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = RegisterSerializer
+    permission_classes = [IsAdminUser]
+
+
+# DELETE  /api/users/delete/<nick> → usuwanie użytkownika (admin only)
+class DestroyUserView(generics.DestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAdminUser]
+    lookup_field = 'nick'
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            user = self.get_object()
+            self.perform_destroy(user)
+            return Response(
+                {"success": "User deleted succesfully."},
+                status=status.HTTP_200_OK
+            )
+
+        except Http404:
+            return Response(
+                {"error": "User not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+# GET  /api/users/<nick>/       → szczegóły użytkownika (zalogowany)
 class UserDetailView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
@@ -38,6 +88,16 @@ class UserDetailView(generics.RetrieveAPIView):
         return User.objects.all()
 
 
+# GET  /api/users/me/posts/     → lista postów zalogowanego użytkownika
+class ListUserPostsView(generics.ListAPIView):
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Post.objects.filter(author=self.request.user)
+
+
+# GET  /api/players/            → lista graczy (public)
 class PlayerListView(generics.ListAPIView):
     queryset = Player.objects.all().annotate(
         lane_order=Case(
@@ -54,6 +114,7 @@ class PlayerListView(generics.ListAPIView):
     permission_classes = [AllowAny]
 
 
+# GET  /api/players/<nick>/     → szczegóły gracza (zalogowany)
 class PlayerDetailView(generics.RetrieveAPIView):
     serializer_class = PlayerSerializer
     permission_classes = [IsAuthenticated]
@@ -62,12 +123,38 @@ class PlayerDetailView(generics.RetrieveAPIView):
     def get_queryset(self):
         return Player.objects.all()
 
+
+# GET  /api/players/<nick>/matches/ → historia meczów (public, paginowana)
+class MatchPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = 'page_size'
+    max_page_size = 20
+
+
+class ListMatchesView(generics.ListAPIView):
+    serializer_class = MatchParticipationSerializer
+    permission_classes = [AllowAny]
+    lookup_field = 'nick'
+    pagination_class = MatchPagination
+
+    def get_queryset(self):
+        nick = self.kwargs['nick']
+        player = Player.objects.get(nick=nick)
+        summoner_names = SummonerName.objects.filter(player=player)
+        return MatchParticipation.objects.filter(
+            summoner__in=summoner_names
+        ).select_related('match').order_by('-match__game_start')
+
+
+# POST /api/register/           → rejestracja nowego konta (public)
 @method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
 
+
+# POST /api/login/              → logowanie (public)
 class LoginView(generics.CreateAPIView):
     serializer_class = LoginSerializer
 
@@ -83,7 +170,7 @@ class LoginView(generics.CreateAPIView):
 
             if user.check_password(password):
                 now = datetime.now()
-                expire = datetime.now() + timedelta(hours=24)
+                expire = now + timedelta(hours=24)
 
                 payload = {
                     'id': user.id,
@@ -99,20 +186,24 @@ class LoginView(generics.CreateAPIView):
                     'token': token,
                     'role': user.role
                 }, status=status.HTTP_200_OK)
-            else:
-                return Response({
-                    'error': 'Invalid credentials'
-                }, status=status.HTTP_401_UNAUTHORIZED)
 
+            return Response(
+                {'error': 'Invalid credentials'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
         except User.DoesNotExist:
-            return Response({
-                'error': 'Invalid credentials'
-            }, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(
+                {'error': 'Invalid credentials'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
+
+# GET  /api/posts/              → lista postów (public, paginowana)
 class PostPagination(PageNumberPagination):
     page_size = 5
     page_size_query_param = 'page_size'
     max_page_size = 20
+
 
 class PostsView(generics.ListAPIView):
     queryset = Post.objects.all()
@@ -120,59 +211,38 @@ class PostsView(generics.ListAPIView):
     permission_classes = [AllowAny]
     pagination_class = PostPagination
 
+
+# POST /api/posts/create/       → tworzenie nowego postu (zalogowany)
 class CreatePostView(generics.CreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
 
+
+# PUT/PATCH /api/posts/edit/<pk>/   → edycja postu (autor lub admin)
 class UpdatePostView(generics.UpdateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
 
     def get_object(self):
         obj = super().get_object()
-
-        if not(self.request.user == obj.author or self.request.user.is_staff):
+        if not (self.request.user == obj.author or self.request.user.is_staff):
             raise PermissionDenied("You don't have permission to do that!")
-
         return obj
 
+
+# DELETE /api/posts/delete/<pk>/    → usuwanie postu (autor lub admin)
 class DestroyPostView(generics.DestroyAPIView):
     queryset = Post.objects.all()
 
     def get_object(self):
         obj = super().get_object()
-
-        if not(self.request.user == obj.author or self.request.user.is_staff):
+        if not (self.request.user == obj.author or self.request.user.is_staff):
             raise PermissionDenied("You don't have permission to do that!")
-
         return obj
 
-class ListUserPostsView(generics.ListAPIView):
-    serializer_class = PostSerializer
-    permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return Post.objects.filter(author=self.request.user)
-
-class MatchPagination(PageNumberPagination):
-    page_size = 5
-    page_size_query_param = 'page_size'
-    max_page_size = 20
-
-class ListMatchesView(generics.ListAPIView):
-    serializer_class = MatchParticipationSerializer
-    permission_classes = [AllowAny]
-    lookup_field = 'nick'
-    pagination_class = MatchPagination
-
-    def get_queryset(self):
-        nick = self.kwargs['nick']
-        player = Player.objects.get(nick=nick)
-        summoner_names = SummonerName.objects.filter(player=player)
-        match_participations = MatchParticipation.objects.filter(summoner__in=summoner_names)
-        return match_participations.select_related('match').order_by('-match__game_start')
-
+# POST /api/newsletter/        → zapisanie do newslettera (public)
 class CreateNewsletterView(generics.CreateAPIView):
     queryset = Newsletter.objects.all()
     serializer_class = NewsletterSerializer
