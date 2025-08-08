@@ -11,7 +11,10 @@ urlpatterns = [
     # DELETE /api/users/delete/<nick>/    → usuwanie użytkownika (admin only)
     path('users/delete/<str:nick>/', views.DestroyUserView.as_view(), name='delete_user'),
 
-    # GET  /api/users/<nick>/       → szczegóły użytkownika (zalogowany)
+    # PUT/PATCH /api/users/edit/<nick>/ edytowanie użytkownika (user albo admin)
+    path('users/edit/<str:nick>/', views.UpdateUserView.as_view(), name='edit_user'),
+
+    # GET  /api/users/<nick>/       → szczegóły użytkownika (konkretny user albo admin)
     path('users/<str:nick>/', views.UserDetailView.as_view(), name='user_detail'),
 
     # GET  /api/users/me/posts/     → lista postów zalogowanego użytkownika

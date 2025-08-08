@@ -1,15 +1,11 @@
 # views.py
 from datetime import datetime, timedelta
-from http.client import responses
-from logging import raiseExceptions
-
 import jwt
 from django.conf import settings
 from django.db.models import Case, When, Value, IntegerField
 from django.http import Http404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from httpx import ResponseNotRead
 from rest_framework.exceptions import PermissionDenied, NotFound
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
@@ -77,16 +73,31 @@ class DestroyUserView(generics.DestroyAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+# PATCH/PUT /api/users/edit/<nick>
+class UpdateUserView(generics.UpdateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    lookup_field = 'nick'
 
-# GET  /api/users/<nick>/       → szczegóły użytkownika (zalogowany)
+    def get_object(self):
+        obj = super().get_object()
+        if not (self.request.user == obj or self.request.user.is_staff):
+            raise PermissionDenied("You don't have permission to do that!")
+        return obj
+
+# GET  /api/users/<nick>/       → szczegóły użytkownika (konkretny user albo admin)
 class UserDetailView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
     lookup_field = 'nick'
 
     def get_queryset(self):
         return User.objects.all()
 
+    def get_object(self):
+        obj = super().get_object()
+        if not (self.request.user == obj or self.request.user.is_staff):
+            raise PermissionDenied("You don't have permission to do that!")
+        return obj
 
 # GET  /api/users/me/posts/     → lista postów zalogowanego użytkownika
 class ListUserPostsView(generics.ListAPIView):
@@ -114,7 +125,7 @@ class PlayerListView(generics.ListAPIView):
     permission_classes = [AllowAny]
 
 
-# GET  /api/players/<nick>/     → szczegóły gracza (zalogowany)
+# GET  /api/players/<nick>/     → szczegóły gracza (admin)
 class PlayerDetailView(generics.RetrieveAPIView):
     serializer_class = PlayerSerializer
     permission_classes = [IsAuthenticated]
@@ -129,7 +140,6 @@ class MatchPagination(PageNumberPagination):
     page_size = 5
     page_size_query_param = 'page_size'
     max_page_size = 20
-
 
 class ListMatchesView(generics.ListAPIView):
     serializer_class = MatchParticipationSerializer

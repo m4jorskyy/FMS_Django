@@ -8,16 +8,29 @@ class PlayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
         fields = ['id', 'first_name', 'last_name', 'nick',  'lane', 'champion', 'team_role']
+        extra_kwargs = {
+            'id': {
+                'read_only': True
+            }
+        }
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'nick', 'email', 'password', 'role']
-        extra_kwargs = {
+        read_only_fields = ['role']
+        extra_kwargs ={
             'password': {
-                'write_only': True
+                'write_only': True,
+                'required': False
             }
         }
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        if password:
+            instance.password = make_password(password)
+        return super().update(instance, validated_data)
 
 class LoginSerializer(serializers.Serializer):
     nick = serializers.CharField()
@@ -29,6 +42,11 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'nick', 'email', 'password', 'role']
+        extra_kwargs = {
+            'role': {
+                'read_only': True
+            }
+        }
 
     def create(self, validated_data):
         user = User(
@@ -50,6 +68,11 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['id', 'title', 'text', 'date', 'author']
+        extra_kwargs = {
+            'id': {
+                'read_only': True
+            }
+        }
 
     def create(self, validated_data):
         validated_data['author'] = self.context['request'].user
