@@ -53,7 +53,7 @@ class Player(models.Model):
 class SummonerName(models.Model):
     player = models.ForeignKey(Player, related_name='summoner_names', on_delete=models.CASCADE)
     riot_id = models.CharField(max_length=255)
-    puuid = models.CharField(max_length=255, default="", db_index=True)
+    puuid = models.CharField(max_length=255, default="", db_index=True, blank=True)
 
 
 class Match(models.Model):

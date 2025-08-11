@@ -135,7 +135,7 @@ class PlayerDetailView(generics.RetrieveAPIView):
         return Player.objects.all()
 
 
-# GET  /api/players/<nick>/matches/ → historia meczów (public, paginowana)
+# GET  /api/players/matches/<nick>/ → historia meczów (public, paginowana)
 class MatchPagination(PageNumberPagination):
     page_size = 5
     page_size_query_param = 'page_size'
@@ -154,6 +154,12 @@ class ListMatchesView(generics.ListAPIView):
         return MatchParticipation.objects.filter(
             summoner__in=summoner_names
         ).select_related('match').order_by('-match__game_start')
+
+#POST /api/players/create/<nick>
+class CreatePlayerView(generics.CreateAPIView):
+    queryset = Player.objects.all()
+    serializer_class = PlayerSerializer
+    permission_classes = [IsAdminUser]
 
 
 # POST /api/register/           → rejestracja nowego konta (public)
