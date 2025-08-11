@@ -10,7 +10,7 @@ from ...models import SummonerName, Match, MatchParticipation
 
 
 class Command(BaseCommand):
-    help = "Fetch recent matches for all summoner names"
+    help = "Fetch recent matches for all summonner names"
 
     def handle(self, *args, **options):
         load_dotenv()
@@ -19,69 +19,83 @@ class Command(BaseCommand):
             self.stderr.write("Missing RIOT_API_KEY in .env file!")
             return
 
-        headers = {
-            "X-Riot-Token": api_key
-        }
+        headers = {"X-Riot-Token": api_key}
 
-        new_matches = 0
-        new_parts = 0
+        total_participants = 0  # Globalna statystyka
 
         for summoner in SummonerName.objects.all():
-            puuid = summoner.puuid
+            self.stdout.write(f"\n=== Gracz: {summoner.riot_id} | PUUID: {summoner.puuid} ===")
 
-            match_id_url = f"https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?start=0&count=5"
+            summoner_participants = 0  # Dla tego gracza
 
-            match_ids_api = requests.get(url=match_id_url, headers=headers)
-            if match_ids_api.status_code != 200:
-                self.stderr.write(f"Failed to fetch Match IDs for {summoner.riot_id}: {match_ids_api}")
-            try:
-                match_ids_api = match_ids_api.json()
-            except ValueError as ve:
-                self.stderr.write(f"Invalid JSON for {summoner.riot_id}: {ve}")
+            match_id_url = f"https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{summoner.puuid}/ids?start=0&count=20"
+            resp = requests.get(match_id_url, headers=headers)
+            time.sleep(1)
+
+            if resp.status_code != 200:
+                self.stderr.write(f"Pobieranie match IDs: {resp.status_code} {resp.text}")
                 continue
 
-            time.sleep(1)
+            match_ids_api = resp.json()
+            self.stdout.write(f"Pobrano {len(match_ids_api)} match_id: {match_ids_api}")
+
+            if not match_ids_api:
+                self.stderr.write("Brak meczów do przetworzenia")
+                continue
 
             for match_id in match_ids_api:
                 if Match.objects.filter(match_id=match_id).exists():
+                    self.stdout.write(f"Pomijam {match_id} (już w bazie)")
                     continue
+
+                self.stdout.write(f"Przetwarzam nowy mecz {match_id}")
+
                 match_details_url = f"https://europe.api.riotgames.com/lol/match/v5/matches/{match_id}"
-
-                match_details_api = requests.get(url=match_details_url, headers=headers)
-
-                if match_details_api.status_code != 200:
-                    self.stderr.write(f"Failed to fetch details for {match_id}: {match_details_api.status_code}")
-                    continue
-                try:
-                    match_details_api = match_details_api.json()
-                except ValueError as ve:
-                    self.stderr.write(f"Invalid JSON for {match_id}: {ve}")
-                    continue
-
+                match_resp = requests.get(match_details_url, headers=headers)
                 time.sleep(1)
 
-                match = Match.objects.create(
+                if match_resp.status_code != 200:
+                    self.stdout.write(
+                        f"Pobieranie szczegółów meczu {match_id}: {match_resp.status_code} {match_resp.text}")
+                    continue
+
+                match_details_api = match_resp.json()
+
+                # Zapis meczu
+                match_obj = Match.objects.create(
                     match_id=match_id,
                     game_duration=match_details_api["info"]["gameDuration"],
-                    game_start=datetime.fromtimestamp(match_details_api["info"]["gameStartTimestamp"] / 1000, tz=timezone.utc)
+                    game_start=datetime.fromtimestamp(match_details_api["info"]["gameStartTimestamp"] / 1000,
+                                                      tz=timezone.utc)
                 )
-                new_matches += 1
+                self.stdout.write(f"Dodano mecz: {match_id}")
 
-                for p in match_details_api["info"]["participants"]:
-                    try:
-                        summ = SummonerName.objects.get(puuid=p["puuid"])
-                        MatchParticipation.objects.create(
-                            match=match,
-                            summoner=summ,
-                            champion=p["championName"],
-                            kills=p["kills"],
-                            deaths=p["deaths"],
-                            assists=p["assists"],
-                            win=p["win"],
-                            lane=p["teamPosition"]
-                        )
-                        new_parts += 1
-                    except SummonerName.DoesNotExist:
+                # Zapis uczestników
+                participants = match_details_api["info"]["participants"]
+                match_participants = 0  # Dla tego konkretnego meczu
+
+                for p in participants:
+                    puuid = p["puuid"]
+                    summoner_in_db = SummonerName.objects.filter(puuid=puuid).first()
+                    if not summoner_in_db:
                         continue
 
-        self.stdout.write(f"Added {new_matches} new matches and {new_parts} participations.")
+                    MatchParticipation.objects.create(
+                        match=match_obj,
+                        summoner=summoner_in_db,
+                        champion=p["championName"],
+                        kills=p["kills"],
+                        deaths=p["deaths"],
+                        assists=p["assists"],
+                        win=p["win"],
+                        lane=p["teamPosition"]
+                    )
+                    match_participants += 1
+                    summoner_participants += 1
+                    total_participants += 1
+
+                self.stdout.write(f"Dodano {match_participants} uczestników do meczu {match_id}")
+
+            self.stdout.write(f"Gracz {summoner.riot_id}: {summoner_participants} uczestników łącznie")
+
+        self.stdout.write(f"PODSUMOWANIE: Dodano {total_participants} uczestników łącznie")
