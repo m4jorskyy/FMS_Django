@@ -41,7 +41,7 @@ class User(AbstractUser):
 class Player(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
-    nick = models.CharField(max_length=255)
+    nick = models.CharField(max_length=255, unique=True)
     lane = models.CharField(max_length=255)
     champion = models.CharField(max_length=255)
     team_role = models.CharField(max_length=255)

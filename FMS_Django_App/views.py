@@ -112,11 +112,11 @@ class ListUserPostsView(generics.ListAPIView):
 class PlayerListView(generics.ListAPIView):
     queryset = Player.objects.all().annotate(
         lane_order=Case(
-            When(lane='Toplane', then=Value(0)),
+            When(lane='Top', then=Value(0)),
             When(lane='Jungle', then=Value(1)),
-            When(lane='Midlane', then=Value(2)),
-            When(lane='Botlane', then=Value(3)),
-            When(lane='Support', then=Value(4)),
+            When(lane='Middle', then=Value(2)),
+            When(lane='Bottom', then=Value(3)),
+            When(lane='Utility', then=Value(4)),
             default=Value(5),
             output_field=IntegerField()
         )
@@ -155,7 +155,7 @@ class ListMatchesView(generics.ListAPIView):
             summoner__in=summoner_names
         ).select_related('match').order_by('-match__game_start')
 
-#POST /api/players/create/<nick>
+#POST /api/players/create/<nick>     tworzenie nowego zawodnika z dashboarda admina
 class CreatePlayerView(generics.CreateAPIView):
     queryset = Player.objects.all()
     serializer_class = PlayerSerializer
