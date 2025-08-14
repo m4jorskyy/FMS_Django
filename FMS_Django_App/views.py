@@ -8,7 +8,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.exceptions import PermissionDenied, NotFound
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, BasePermission
 from rest_framework.response import Response
 from .serializers import UserSerializer, PlayerSerializer, LoginSerializer, PostSerializer, \
     MatchParticipationSerializer, RegisterSerializer, NewsletterSerializer
@@ -23,10 +23,23 @@ PATCH → patch() method (partial update)
 DELETE → delete() method (destroy)
 """
 
+class HasSpecificRolePermission(BasePermission):
+    required_role = None
+
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+
+        user_role = getattr(request.user, 'role', None)
+
+        return user_role == self.required_role or user_role == "ADMIN"
+
+class IsEditorOrAdminUser(HasSpecificRolePermission):
+    required_role = "EDITOR"
 
 # Create your views here.
 
-# GET  /api/users/              → lista użytkowników (admin only)
+# GET  /api/users/                  lista użytkowników (admin only)
 class UserPagination(PageNumberPagination):
     page_size = 5
     page_size_query_param = 'page_size'
@@ -38,14 +51,14 @@ class UserListView(generics.ListAPIView):
     pagination_class = UserPagination
 
 
-# POST /api/users/create/       → tworzenie nowego użytkownika (admin only)
+# POST /api/users/create/           tworzenie nowego użytkownika (admin only)
 class CreateUserView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [IsAdminUser]
 
 
-# DELETE  /api/users/delete/<nick> → usuwanie użytkownika (admin only)
+# DELETE  /api/users/delete/<nick>  usuwanie użytkownika (admin only)
 class DestroyUserView(generics.DestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -73,7 +86,7 @@ class DestroyUserView(generics.DestroyAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-# PATCH/PUT /api/users/edit/<nick>
+# PATCH/PUT /api/users/edit/<nick>  edytowanie uż
 class UpdateUserView(generics.UpdateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -85,7 +98,7 @@ class UpdateUserView(generics.UpdateAPIView):
             raise PermissionDenied("You don't have permission to do that!")
         return obj
 
-# GET  /api/users/<nick>/       → szczegóły użytkownika (konkretny user albo admin)
+# GET  /api/users/<nick/            szczegóły użytkownika (konkretny user albo admin)
 class UserDetailView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     lookup_field = 'nick'
@@ -99,7 +112,7 @@ class UserDetailView(generics.RetrieveAPIView):
             raise PermissionDenied("You don't have permission to do that!")
         return obj
 
-# GET  /api/users/me/posts/     → lista postów zalogowanego użytkownika
+# GET  /api/users/me/posts/         lista postów zalogowanego użytkownika
 class ListUserPostsView(generics.ListAPIView):
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
@@ -108,7 +121,7 @@ class ListUserPostsView(generics.ListAPIView):
         return Post.objects.filter(author=self.request.user)
 
 
-# GET  /api/players/            → lista graczy (public)
+# GET  /api/players/                lista graczy (public)
 class PlayerListView(generics.ListAPIView):
     queryset = Player.objects.all().annotate(
         lane_order=Case(
@@ -125,7 +138,7 @@ class PlayerListView(generics.ListAPIView):
     permission_classes = [AllowAny]
 
 
-# GET  /api/players/<nick>/     → szczegóły gracza (admin)
+# GET  /api/players/<nick>/         szczegóły gracza (admin)
 class PlayerDetailView(generics.RetrieveAPIView):
     serializer_class = PlayerSerializer
     permission_classes = [IsAuthenticated]
@@ -135,7 +148,7 @@ class PlayerDetailView(generics.RetrieveAPIView):
         return Player.objects.all()
 
 
-# GET  /api/players/matches/<nick>/ → historia meczów (public, paginowana)
+# GET  /api/players/matches/<nick>/ historia meczów (public, paginowana)
 class MatchPagination(PageNumberPagination):
     page_size = 5
     page_size_query_param = 'page_size'
@@ -162,7 +175,7 @@ class CreatePlayerView(generics.CreateAPIView):
     permission_classes = [IsAdminUser]
 
 
-# POST /api/register/           → rejestracja nowego konta (public)
+# POST /api/register/               rejestracja nowego konta (public)
 @method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -170,7 +183,7 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = [AllowAny]
 
 
-# POST /api/login/              → logowanie (public)
+# POST /api/login/                  logowanie (public)
 class LoginView(generics.CreateAPIView):
     serializer_class = LoginSerializer
 
@@ -214,7 +227,7 @@ class LoginView(generics.CreateAPIView):
             )
 
 
-# GET  /api/posts/              → lista postów (public, paginowana)
+# GET  /api/posts/                  lista postów (public, paginowana)
 class PostPagination(PageNumberPagination):
     page_size = 5
     page_size_query_param = 'page_size'
@@ -222,20 +235,19 @@ class PostPagination(PageNumberPagination):
 
 
 class PostsView(generics.ListAPIView):
-    queryset = Post.objects.all()
+    queryset = Post.objects.all().order_by("-date")
     serializer_class = PostSerializer
     permission_classes = [AllowAny]
     pagination_class = PostPagination
 
-
-# POST /api/posts/create/       → tworzenie nowego postu (zalogowany)
+# POST /api/posts/create/           tworzenie nowego postu (zalogowany)
 class CreatePostView(generics.CreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsEditorOrAdminUser]
 
 
-# PUT/PATCH /api/posts/edit/<pk>/   → edycja postu (autor lub admin)
+# PUT/PATCH /api/posts/edit/<pk>/   edycja postu (autor lub admin)
 class UpdatePostView(generics.UpdateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
@@ -247,7 +259,7 @@ class UpdatePostView(generics.UpdateAPIView):
         return obj
 
 
-# DELETE /api/posts/delete/<pk>/    → usuwanie postu (autor lub admin)
+# DELETE /api/posts/delete/<pk>/    usuwanie postu (autor lub admin)
 class DestroyPostView(generics.DestroyAPIView):
     queryset = Post.objects.all()
 
@@ -258,7 +270,7 @@ class DestroyPostView(generics.DestroyAPIView):
         return obj
 
 
-# POST /api/newsletter/        → zapisanie do newslettera (public)
+# POST /api/newsletter/             zapisanie do newslettera (public)
 class CreateNewsletterView(generics.CreateAPIView):
     queryset = Newsletter.objects.all()
     serializer_class = NewsletterSerializer
