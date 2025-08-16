@@ -6,9 +6,7 @@ djangorestframework~=3.16.0
 djangorestframework-simplejwt>=5.5.1
 django-cors-headers
 
-jwt~=1.4.0
 PyJWT~=2.10.1
-dotenv~=0.9.9
 gunicorn
 whitenoise
 dj-database-url
