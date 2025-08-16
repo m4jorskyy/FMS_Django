@@ -33,7 +33,8 @@ DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    'fms-django.onrender.com',
+    'fms-django.onrender.com',  # Zmień na swoją domenę z Render
+    '.onrender.com',  # Wildcards dla subdomen Render
 ]
 
 # Application definition
