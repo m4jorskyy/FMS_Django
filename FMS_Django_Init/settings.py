@@ -33,8 +33,7 @@ DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    'fms-django.onrender.com',  # Zmień na swoją domenę z Render
-    '.onrender.com',  # Wildcards dla subdomen Render
+    'https://fms-django.onrender.com/'
 ]
 
 # Application definition
@@ -73,7 +72,6 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5174",
-    "https://twoja-domena.vercel.app",  # Dodaj po deployment frontendu
 ]
 
 # W produkcji możesz też dodać:
