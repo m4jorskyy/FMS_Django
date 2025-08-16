@@ -49,3 +49,14 @@ Thumbs.db
 
 # Environment variables
 .env
+
+# Django
+*.pyc
+staticfiles
+
+# Python
+.venv/
+
+# Node
+node_modules/
+package-lock.json
