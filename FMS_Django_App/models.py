@@ -45,6 +45,12 @@ class Player(models.Model):
     lane = models.CharField(max_length=255)
     champion = models.CharField(max_length=255)
     team_role = models.CharField(max_length=255)
+    twitter = models.CharField(max_length=255, blank=True, null=True)
+    twitch = models.CharField(max_length=255, blank=True, null=True)
+    kick = models.CharField(max_length=255, blank=True, null=True)
+    youtube = models.CharField(max_length=255, blank=True, null=True)
+    instagram = models.CharField(max_length=255, blank=True, null=True)
+    tiktok = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.nick

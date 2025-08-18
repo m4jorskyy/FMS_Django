@@ -10,7 +10,7 @@ class SummonerNameInline(admin.TabularInline):
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ('first_name', 'last_name', 'nick',  'lane', 'champion', 'team_role')
+    list_display = ('first_name', 'last_name', 'nick',  'lane', 'champion', 'team_role', 'twitter', 'youtube', 'twitch', 'kick', 'instagram', 'tiktok')
     inlines = [SummonerNameInline]
 
 @admin.register(SummonerName)
