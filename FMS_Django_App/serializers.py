@@ -7,7 +7,7 @@ from .models import Player, User, Post, Match, MatchParticipation, Newsletter
 class PlayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
-        fields = ['id', 'first_name', 'last_name', 'nick',  'lane', 'champion', 'team_role']
+        fields = ['id', 'first_name', 'last_name', 'nick',  'lane', 'champion', 'team_role', 'twitter', 'youtube', 'twitch', 'kick', 'instagram', 'tiktok']
         extra_kwargs = {
             'id': {
                 'read_only': True
