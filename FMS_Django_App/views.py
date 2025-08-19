@@ -295,8 +295,8 @@ class ListOfficialMatches(generics.ListAPIView):
             "Authorization": f"Bearer {str(os.getenv('PANDASCORE_API_KEY'))}"
         }
 
-        print("Panda api" + str(os.getenv('PANDASCORE_API_KEY')))
+        print("Panda api " + str(os.getenv('PANDASCORE_API_KEY')))
 
-        req = requests.get(url, headers)
+        req = requests.get(url = url, headers = headers)
 
         return Response(req.json(), status = req.status_code)
