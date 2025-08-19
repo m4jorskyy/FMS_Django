@@ -52,4 +52,7 @@ urlpatterns = [
 
     # POST /api/newsletter/             zapisanie do newslettera (public)
     path('newsletter/', views.CreateNewsletterView.as_view(), name='sign_to_newsletter'),
+
+    # GET /api/pandascore.co            pobranie oficjalnych meczy (public)
+    path('officialmatches/', views.ListOfficialMatches.as_view(), name='get_official_matches')
 ]

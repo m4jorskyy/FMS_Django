@@ -1,6 +1,8 @@
 # views.py
+import os
 from datetime import datetime, timedelta
 import jwt
+import requests
 from django.conf import settings
 from django.db.models import Case, When, Value, IntegerField
 from django.http import Http404
@@ -275,3 +277,23 @@ class CreateNewsletterView(generics.CreateAPIView):
     queryset = Newsletter.objects.all()
     serializer_class = NewsletterSerializer
     permission_classes = [AllowAny]
+
+# GET /api/pandascore.co            oficjalne mecze (public)
+class ListOfficialMatches(generics.ListAPIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        team_id = request.query_params.get("team_id")
+        status = request.query_params.get("status")
+        page = request.query_params.get("page", 1)
+
+        url = f"https://api.pandascore.co/lol/matches?filter[opponent_id]={team_id}&filter[status]={status}&page[number]={page}&page[size]=5"
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {str(os.getenv('PANDASCORE_API_KEY'))}"
+        }
+
+        req = requests.get(url, headers)
+
+        return Response(req.json(), status = req.status_code)
