@@ -51,8 +51,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'FMS_Django_App.middleware.SecurityHeadersMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'FMS_Django_App.middleware.SecurityHeadersMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
