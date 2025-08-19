@@ -8,6 +8,7 @@ from django.db.models import Case, When, Value, IntegerField
 from django.http import Http404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from dotenv import load_dotenv
 from rest_framework.exceptions import PermissionDenied, NotFound
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, BasePermission
@@ -293,6 +294,8 @@ class ListOfficialMatches(generics.ListAPIView):
             "Content-Type": "application/json",
             "Authorization": f"Bearer {str(os.getenv('PANDASCORE_API_KEY'))}"
         }
+
+        print("Panda api" + str(os.getenv('PANDASCORE_API_KEY')))
 
         req = requests.get(url, headers)
 
