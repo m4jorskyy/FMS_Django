@@ -189,6 +189,7 @@ class RegisterView(generics.CreateAPIView):
 # POST /api/login/                  logowanie (public)
 class LoginView(generics.CreateAPIView):
     serializer_class = LoginSerializer
+    permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
