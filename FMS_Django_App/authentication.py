@@ -4,14 +4,14 @@ import jwt
 from django.conf import settings
 from .models import User
 
+
 class JWTAuthentication(BaseAuthentication):
     def authenticate(self, request):
-        auth_header = request.META.get('HTTP_AUTHORIZATION')
+        # Tylko cookies - brak wsparcia dla Authorization header
+        token = request.COOKIES.get('access_token')
 
-        if not auth_header or not auth_header.startswith('Bearer '):
+        if not token:
             return None
-
-        token = auth_header.split(' ')[1]
 
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])

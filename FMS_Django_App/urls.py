@@ -2,6 +2,9 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # GET /api/me                       info zalogowanego usera
+    path('me/', views.MeView.as_view(), name="me"),
+
     # GET  /api/users/                  lista użytkowników (admin only)
     path('users/', views.UserListView.as_view(), name='user_list'),
 
@@ -56,8 +59,8 @@ urlpatterns = [
     # GET pandascore.co                 pobranie oficjalnych meczy (public)
     path('officialmatches/', views.ListOfficialMatches.as_view(), name='get_official_matches'),
 
-    # # GET /api/csrf                     csrf token (public)
-    # path('csrf/', views.CsrfView.as_view(), name="get_csrf_token"),
+    # GET /api/csrf                     csrf token (public)
+    path('csrf/', views.CsrfView.as_view(), name="get_csrf_token"),
 
     # POST /api/logout                  wylogowanie (zalogowany)
     path('logout/', views.LogoutView.as_view(), name="logout")

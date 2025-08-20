@@ -13,6 +13,7 @@ from rest_framework.generics import RetrieveAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, BasePermission
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .serializers import UserSerializer, PlayerSerializer, LoginSerializer, PostSerializer, \
     MatchParticipationSerializer, RegisterSerializer, NewsletterSerializer
@@ -45,6 +46,20 @@ class IsEditorOrAdminUser(HasSpecificRolePermission):
 
 
 # Create your views here.
+
+# GET /api/me/
+class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response({
+            "nick": user.nick,
+            "role": user.role,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name
+        })
 
 # GET  /api/users/                  lista użytkowników (admin only)
 class UserPagination(PageNumberPagination):
@@ -251,6 +266,7 @@ class LoginView(generics.CreateAPIView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
+
 class LogoutView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
 
@@ -331,16 +347,14 @@ class ListOfficialMatches(generics.ListAPIView):
             "Authorization": f"Bearer {str(os.getenv('PANDASCORE_API_KEY'))}"
         }
 
-        print("Panda api " + str(os.getenv('PANDASCORE_API_KEY')))
-
         req = requests.get(url=url, headers=headers)
 
         return Response(req.json(), status=req.status_code)
 
 
-# @method_decorator(ensure_csrf_cookie, name="dispatch")
-# class CsrfView(RetrieveAPIView):
-#     permission_classes = [AllowAny]
-#
-#     def get(self, request, *args, **kwargs):
-#         return Response(status=204)
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class CsrfView(RetrieveAPIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        return Response(status=204)
