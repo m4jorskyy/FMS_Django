@@ -134,12 +134,15 @@ DATABASES = {
         'USER': str(os.getenv("DB_USER")),
         'PASSWORD': str(os.getenv("DB_PASSWORD")),
         'HOST': str(os.getenv("DB_HOST")),
-        'PORT': '5432'
+        'PORT': '5432',
+        'OPTIONS': {
+            'sslmode': 'require'
+        }
     }
 }
 
 if os.getenv('DATABASE_URL'):
-    DATABASES['default'] = dj_database_url.parse(os.getenv('DATABASE_URL'))
+    DATABASES['default'] = dj_database_url.parse(os.getenv('DATABASE_URL'), ssl_require=True)
 
 # Security settings
 if not DEBUG:
@@ -183,6 +186,19 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',  # limit dla niezalogowanych
+        'rest_framework.throttling.UserRateThrottle',  # limit dla zalogowanych
+        'rest_framework.throttling.ScopedRateThrottle',  # dodatkowe "scopy"
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',  # bardziej realistyczny limit
+        'user': '500/hour',  # więcej dla zalogowanych
+        'login': '5/min',  # jeszcze bardziej restrykcyjny
+        'newsletter': '3/day',  # lepszy dla newslettera
+        'pandascore': '60/min',  # więcej dla API
+        'posts': '20/hour',  # osobny limit dla tworzenia postów
+    },
 }
 
 # Password validation
@@ -271,7 +287,6 @@ if not DEBUG:
             },
         },
     }
-
 
 # Cache settings (opcjonalnie dla produkcji)
 if not DEBUG:

@@ -2,7 +2,11 @@
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 from .models import Player, User, Post, Match, MatchParticipation, Newsletter
+import bleach
 
+ALLOWED_TAGS = ['b','i','em','strong','u','a','p','ul','ol','li','br','blockquote','code','pre', 'h1', 'h2']
+ALLOWED_ATTRS = {'a': ['href', 'title', 'rel', 'target']}
+ALLOWED_PROTOCOLS = ['http','https','mailto']
 
 class PlayerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -77,6 +81,20 @@ class PostSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['author'] = self.context['request'].user
         return super().create(validated_data)
+
+    def validate_title(self, value):
+        return bleach.clean(value, tags=[], attributes={}, protocols=[], strip=True)
+
+    def validate_text(self, value):
+        cleaned = bleach.clean(
+            value,
+            tags=ALLOWED_TAGS,
+            attributes=ALLOWED_ATTRS,
+            protocols=ALLOWED_PROTOCOLS,
+            strip=True
+        )
+
+        return bleach.linkify(cleaned)
 
 class MatchSerializer(serializers.ModelSerializer):
     class Meta:

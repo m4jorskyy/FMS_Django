@@ -13,6 +13,7 @@ from rest_framework.generics import RetrieveAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, BasePermission
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from .serializers import UserSerializer, PlayerSerializer, LoginSerializer, PostSerializer, \
@@ -215,6 +216,8 @@ class RegisterView(generics.CreateAPIView):
 class LoginView(generics.CreateAPIView):
     serializer_class = LoginSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'login'
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -299,6 +302,8 @@ class CreatePostView(generics.CreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [IsEditorOrAdminUser]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'posts'
 
 
 # PUT/PATCH /api/posts/edit/<pk>/   edycja postu (autor lub admin)
@@ -329,11 +334,15 @@ class CreateNewsletterView(generics.CreateAPIView):
     queryset = Newsletter.objects.all()
     serializer_class = NewsletterSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'newsletter'
 
 
 # GET /api/pandascore.co            oficjalne mecze (public)
 class ListOfficialMatches(generics.ListAPIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'pandascore'
 
     def get(self, request, *args, **kwargs):
         team_id = request.query_params.get("team_id")

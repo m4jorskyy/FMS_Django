@@ -7,8 +7,15 @@ from .models import User
 
 class JWTAuthentication(BaseAuthentication):
     def authenticate(self, request):
-        # Tylko cookies - brak wsparcia dla Authorization header
-        token = request.COOKIES.get('access_token')
+        # Najpierw sprawdź Authorization header
+        auth_header = request.META.get('HTTP_AUTHORIZATION')
+        token = None
+
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.removeprefix('Bearer ')
+        else:
+            # Jeśli brak headera, sprawdź cookie
+            token = request.COOKIES.get('access_token')
 
         if not token:
             return None
@@ -21,6 +28,8 @@ class JWTAuthentication(BaseAuthentication):
                 raise AuthenticationFailed('Invalid token')
 
             user = User.objects.get(id=user_id)
+            if not user:
+                raise AuthenticationFailed('User not found')
 
             return (user, token)
 
