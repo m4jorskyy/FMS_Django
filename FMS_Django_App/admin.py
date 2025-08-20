@@ -27,7 +27,7 @@ class MatchParticipationAdmin(admin.ModelAdmin):
 
 @admin.register(User)
 class UsersAdmin(admin.ModelAdmin):
-    list_display = ('first_name', 'last_name', 'nick', 'email', 'password', 'role')
+    list_display = ('first_name', 'last_name', 'nick', 'email', 'role')
 
 @admin.register(Post)
 class PostsAdmin(admin.ModelAdmin):
