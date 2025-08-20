@@ -70,9 +70,17 @@ ROOT_URLCONF = 'FMS_Django_Init.urls'
 # CORS settings
 CORS_ALLOW_CREDENTIALS = True
 
+CSRF_COOKIE_NAME = "csrftoken"
+
 if DEBUG:
     # Development CORS settings
     CORS_ALLOWED_ORIGINS = [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+    ],
+    CSRF_TRUSTED_ORIGINS = [
         "http://localhost:5173",
         "http://localhost:5174",
         "http://127.0.0.1:5173",
@@ -81,6 +89,14 @@ if DEBUG:
 else:
     # Production CORS settings - dodaj tutaj swoje domenę frontendową
     CORS_ALLOWED_ORIGINS = [
+        # "https://your-frontend-domain.com",
+        # "https://www.your-frontend-domain.com",
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+    ],
+    CSRF_TRUSTED_ORIGINS = [
         # "https://your-frontend-domain.com",
         # "https://www.your-frontend-domain.com",
         "http://localhost:5173",
@@ -123,12 +139,6 @@ DATABASES = {
 if os.getenv('DATABASE_URL'):
     DATABASES['default'] = dj_database_url.parse(os.getenv('DATABASE_URL'))
 
-CSRF_COOKIE_NAME = "csrftoken"
-
-CSRF_TRUSTED_ORIGINS = [
-    "https://fms-django.onrender.com/"
-]
-
 # Security settings
 if not DEBUG:
     # SSL/HTTPS settings
@@ -146,8 +156,8 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     CSRF_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Strict'
-    CSRF_COOKIE_SAMESITE = 'Strict'
+    SESSION_COOKIE_SAMESITE = 'None'
+    CSRF_COOKIE_SAMESITE = 'None'
 
     # Frame protection
     X_FRAME_OPTIONS = 'DENY'

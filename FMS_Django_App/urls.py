@@ -53,6 +53,12 @@ urlpatterns = [
     # POST /api/newsletter/             zapisanie do newslettera (public)
     path('newsletter/', views.CreateNewsletterView.as_view(), name='sign_to_newsletter'),
 
-    # GET /api/pandascore.co            pobranie oficjalnych meczy (public)
-    path('officialmatches/', views.ListOfficialMatches.as_view(), name='get_official_matches')
+    # GET pandascore.co                 pobranie oficjalnych meczy (public)
+    path('officialmatches/', views.ListOfficialMatches.as_view(), name='get_official_matches'),
+
+    # # GET /api/csrf                     csrf token (public)
+    # path('csrf/', views.CsrfView.as_view(), name="get_csrf_token"),
+
+    # POST /api/logout                  wylogowanie (zalogowany)
+    path('logout/', views.LogoutView.as_view(), name="logout")
 ]

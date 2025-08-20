@@ -7,12 +7,13 @@ from django.conf import settings
 from django.db.models import Case, When, Value, IntegerField
 from django.http import Http404
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
-from dotenv import load_dotenv
-from rest_framework.exceptions import PermissionDenied, NotFound
+from django.views.decorators.csrf import ensure_csrf_cookie
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.generics import RetrieveAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, BasePermission
 from rest_framework.response import Response
+
 from .serializers import UserSerializer, PlayerSerializer, LoginSerializer, PostSerializer, \
     MatchParticipationSerializer, RegisterSerializer, NewsletterSerializer
 from rest_framework import generics, status
@@ -26,6 +27,7 @@ PATCH → patch() method (partial update)
 DELETE → delete() method (destroy)
 """
 
+
 class HasSpecificRolePermission(BasePermission):
     required_role = None
 
@@ -37,8 +39,10 @@ class HasSpecificRolePermission(BasePermission):
 
         return user_role == self.required_role or user_role == "ADMIN"
 
+
 class IsEditorOrAdminUser(HasSpecificRolePermission):
     required_role = "EDITOR"
+
 
 # Create your views here.
 
@@ -47,6 +51,8 @@ class UserPagination(PageNumberPagination):
     page_size = 5
     page_size_query_param = 'page_size'
     max_page_size = 20
+
+
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -89,6 +95,7 @@ class DestroyUserView(generics.DestroyAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+
 # PATCH/PUT /api/users/edit/<nick>  edytowanie uż
 class UpdateUserView(generics.UpdateAPIView):
     queryset = User.objects.all()
@@ -100,6 +107,7 @@ class UpdateUserView(generics.UpdateAPIView):
         if not (self.request.user == obj or self.request.user.is_staff):
             raise PermissionDenied("You don't have permission to do that!")
         return obj
+
 
 # GET  /api/users/<nick/            szczegóły użytkownika (konkretny user albo admin)
 class UserDetailView(generics.RetrieveAPIView):
@@ -114,6 +122,7 @@ class UserDetailView(generics.RetrieveAPIView):
         if not (self.request.user == obj or self.request.user.is_staff):
             raise PermissionDenied("You don't have permission to do that!")
         return obj
+
 
 # GET  /api/users/me/posts/         lista postów zalogowanego użytkownika
 class ListUserPostsView(generics.ListAPIView):
@@ -157,6 +166,7 @@ class MatchPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 20
 
+
 class ListMatchesView(generics.ListAPIView):
     serializer_class = MatchParticipationSerializer
     permission_classes = [AllowAny]
@@ -171,7 +181,8 @@ class ListMatchesView(generics.ListAPIView):
             summoner__in=summoner_names
         ).select_related('match').order_by('-match__game_start')
 
-#POST /api/players/create/<nick>     tworzenie nowego zawodnika z dashboarda admina
+
+# POST /api/players/create/<nick>     tworzenie nowego zawodnika z dashboarda admina
 class CreatePlayerView(generics.CreateAPIView):
     queryset = Player.objects.all()
     serializer_class = PlayerSerializer
@@ -179,7 +190,6 @@ class CreatePlayerView(generics.CreateAPIView):
 
 
 # POST /api/register/               rejestracja nowego konta (public)
-@method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
@@ -214,11 +224,22 @@ class LoginView(generics.CreateAPIView):
 
                 token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
 
-                return Response({
-                    'nick': user.nick,
-                    'token': token,
-                    'role': user.role
+                response = Response({
+                    "nick": user.nick,
+                    "role": user.role
                 }, status=status.HTTP_200_OK)
+
+                response.set_cookie(
+                    key="access_token",
+                    value=token,
+                    httponly=True,
+                    secure=not settings.DEBUG,
+                    samesite="None" if not settings.DEBUG else "Lax",
+                    max_age=24 * 60 * 60,
+                    path="/"
+                )
+
+                return response
 
             return Response(
                 {'error': 'Invalid credentials'},
@@ -229,6 +250,18 @@ class LoginView(generics.CreateAPIView):
                 {'error': 'Invalid credentials'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
+
+class LogoutView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        resp = Response({"detail": "Logged out successfully"}, status=200)
+        resp.delete_cookie(
+            key="access_token",
+            path="/",
+            samesite="None" if not settings.DEBUG else "Lax"
+        )
+        return resp
 
 
 # GET  /api/posts/                  lista postów (public, paginowana)
@@ -243,6 +276,7 @@ class PostsView(generics.ListAPIView):
     serializer_class = PostSerializer
     permission_classes = [AllowAny]
     pagination_class = PostPagination
+
 
 # POST /api/posts/create/           tworzenie nowego postu (zalogowany)
 class CreatePostView(generics.CreateAPIView):
@@ -280,6 +314,7 @@ class CreateNewsletterView(generics.CreateAPIView):
     serializer_class = NewsletterSerializer
     permission_classes = [AllowAny]
 
+
 # GET /api/pandascore.co            oficjalne mecze (public)
 class ListOfficialMatches(generics.ListAPIView):
     permission_classes = [AllowAny]
@@ -298,6 +333,14 @@ class ListOfficialMatches(generics.ListAPIView):
 
         print("Panda api " + str(os.getenv('PANDASCORE_API_KEY')))
 
-        req = requests.get(url = url, headers = headers)
+        req = requests.get(url=url, headers=headers)
 
-        return Response(req.json(), status = req.status_code)
+        return Response(req.json(), status=req.status_code)
+
+
+# @method_decorator(ensure_csrf_cookie, name="dispatch")
+# class CsrfView(RetrieveAPIView):
+#     permission_classes = [AllowAny]
+#
+#     def get(self, request, *args, **kwargs):
+#         return Response(status=204)
