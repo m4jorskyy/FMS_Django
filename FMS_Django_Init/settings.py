@@ -33,7 +33,8 @@ DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    'fms-django.onrender.com'
+    'fms-django.onrender.com',
+    'fms-django-1.onrender.com'
 ]
 
 # Application definition
@@ -283,6 +284,22 @@ if not DEBUG:
                 'handlers': ['console'],
                 'level': 'INFO',
                 'propagate': False,
+            },
+        },
+    }
+else:
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            },
+        },
+        'loggers': {
+            'django.db.backends': {
+                'handlers': ['console'],
+                'level': 'INFO',
             },
         },
     }
