@@ -1,7 +1,7 @@
 #serializers.py
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
-from .models import Player, User, Post, Match, MatchParticipation, Newsletter
+from .models import Player, User, Post, Match, MatchParticipation, Newsletter, SummonerName
 import bleach
 
 ALLOWED_TAGS = ['b','i','em','strong','u','a','p','ul','ol','li','br','blockquote','code','pre', 'h1', 'h2']
@@ -113,3 +113,10 @@ class NewsletterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Newsletter
         fields = ['email']
+
+class SummonerNameSerializer(serializers.ModelSerializer):
+    player = PlayerSerializer(read_only=True)
+
+    class Meta:
+        model = SummonerName
+        fields = ['riot_id', 'puuid', 'player', 'tier', 'rank', 'league_points']

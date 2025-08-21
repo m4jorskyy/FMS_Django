@@ -17,7 +17,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from .serializers import UserSerializer, PlayerSerializer, LoginSerializer, PostSerializer, \
-    MatchParticipationSerializer, RegisterSerializer, NewsletterSerializer
+    MatchParticipationSerializer, RegisterSerializer, NewsletterSerializer, SummonerNameSerializer
 from rest_framework import generics, status
 from .models import User, Player, Post, SummonerName, MatchParticipation, Newsletter
 
@@ -61,6 +61,7 @@ class MeView(APIView):
             "first_name": user.first_name,
             "last_name": user.last_name
         })
+
 
 # GET  /api/users/                  lista użytkowników (admin only)
 class UserPagination(PageNumberPagination):
@@ -361,9 +362,50 @@ class ListOfficialMatches(generics.ListAPIView):
         return Response(req.json(), status=req.status_code)
 
 
+# GET /api/csrf                     CSRF Token
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class CsrfView(RetrieveAPIView):
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
         return Response(status=204)
+
+
+# GET /api/players/<nick>/ranks
+class ListPlayerRanks(generics.ListAPIView):
+    serializer_class = SummonerNameSerializer
+    permission_classes = [AllowAny]
+    lookup_field = 'nick'
+
+    def get_queryset(self):
+        nick = self.kwargs['nick']
+
+        try:
+            player = Player.objects.get(nick=nick)
+            return SummonerName.objects.filter(player=player).annotate(
+                tier_order=Case(
+                    When(tier="CHALLENGER", then=Value(0)),
+                    When(tier="GRANDMASTER", then=Value(1)),
+                    When(tier="MASTER", then=Value(2)),
+                    When(tier="DIAMOND", then=Value(3)),
+                    When(tier="EMERALD", then=Value(4)),
+                    When(tier="PLATINUM", then=Value(5)),
+                    When(tier="GOLD", then=Value(6)),
+                    When(tier="SILVER", then=Value(7)),
+                    When(tier="BRONZE", then=Value(8)),
+                    When(tier="IRON", then=Value(9)),
+                    When(tier="UNRANKED", then=Value(10)),
+                    default=Value(10),
+                    output_field=IntegerField()
+                ),
+                rank_order=Case(
+                    When(rank="I", then=Value(1)),
+                    When(rank="II", then=Value(2)),
+                    When(rank="III", then=Value(3)),
+                    When(rank="IV", then=Value(4)),
+                    default=Value(5),
+                    output_field=IntegerField()
+                )
+            ).order_by('tier_order', 'rank_order')
+        except Player.DoesNotExist:
+            return SummonerName.objects.none()

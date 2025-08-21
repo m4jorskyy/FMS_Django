@@ -60,7 +60,9 @@ class SummonerName(models.Model):
     player = models.ForeignKey(Player, related_name='summoner_names', on_delete=models.CASCADE)
     riot_id = models.CharField(max_length=255)
     puuid = models.CharField(max_length=255, default="", db_index=True, blank=True)
-
+    tier = models.CharField(max_length=255, default="", blank=True)
+    rank = models.CharField(max_length=255, default="", blank=True)
+    league_points = models.IntegerField(default=0)
 
 class Match(models.Model):
     match_id = models.CharField(max_length=20, unique=True, db_index=True)

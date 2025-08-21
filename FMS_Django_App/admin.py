@@ -15,7 +15,7 @@ class PlayerAdmin(admin.ModelAdmin):
 
 @admin.register(SummonerName)
 class SummonerNameAdmin(admin.ModelAdmin):
-    list_display = ('riot_id', 'puuid', 'player')
+    list_display = ('riot_id', 'puuid', 'player', 'tier', 'rank', 'league_points')
 
 @admin.register(Match)
 class MatchesAdmin(admin.ModelAdmin):

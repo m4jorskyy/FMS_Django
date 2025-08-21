@@ -63,5 +63,8 @@ urlpatterns = [
     path('csrf/', views.CsrfView.as_view(), name="get_csrf_token"),
 
     # POST /api/logout                  wylogowanie (zalogowany)
-    path('logout/', views.LogoutView.as_view(), name="logout")
+    path('logout/', views.LogoutView.as_view(), name="logout"),
+
+    # GET /api/players/<nick>/ranks/    pobranie rang gracza (public)
+    path('players/<str:nick>/ranks/', views.ListPlayerRanks.as_view(), name='player_ranks'),
 ]

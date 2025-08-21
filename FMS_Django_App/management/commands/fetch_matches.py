@@ -25,6 +25,42 @@ class Command(BaseCommand):
 
         for summoner in SummonerName.objects.all():
             self.stdout.write(f"\n=== Gracz: {summoner.riot_id} | PUUID: {summoner.puuid} ===")
+            self.stdout.write(f"\n Pobieranie rangi konta: {summoner.riot_id}")
+
+            rank_url = f"https://euw1.api.riotgames.com/lol/league/v4/entries/by-puuid/{summoner.puuid}"
+            rank_resp = requests.get(rank_url, headers=headers)
+            time.sleep(1)
+
+            if rank_resp.status_code != 200:
+                self.stderr.write(f"Pobieranie rangi konta: {rank_resp.status_code} {rank_resp.text}")
+                continue
+
+            rank_api = rank_resp.json()
+            if not rank_api:
+                self.stdout.write("Brak danych rankingowych.")
+                return False
+
+            soloq = None
+            for entry in rank_api:
+                if entry.get('queueType') == 'RANKED_SOLO_5x5':
+                    soloq = entry
+                    break
+
+            if not soloq:
+                self.stderr.write("Brak Solo Queue rankingu")
+                return False
+
+            tier = soloq.get('tier', 'UNRANKED')
+            rank = soloq.get('rank', '')
+            league_points = soloq.get('leaguePoints', 0)
+
+            SummonerName.objects.filter(id=summoner.id).update(
+                tier=tier,
+                rank=rank,
+                league_points=league_points
+            )
+
+            self.stdout.write(f"Zaktualizowano rangę dla {summoner.riot_id}: {tier} {rank} {league_points} LP")
 
             summoner_participants = 0  # Dla tego gracza
 
