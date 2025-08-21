@@ -88,10 +88,8 @@ if DEBUG:
         "http://127.0.0.1:5174",
     ]
 else:
-    # Production CORS settings - dodaj tutaj swoje domenę frontendową
     CORS_ALLOWED_ORIGINS = [
-        # "https://your-frontend-domain.com",
-        # "https://www.your-frontend-domain.com",
+        "https://fms-react-eight.vercel.app/"
         "http://localhost:5173",
         "http://localhost:5174",
         "http://127.0.0.1:5173",
@@ -99,8 +97,7 @@ else:
     ]
 
     CSRF_TRUSTED_ORIGINS = [
-        # "https://your-frontend-domain.com",
-        # "https://www.your-frontend-domain.com",
+        "https://fms-react-eight.vercel.app/"
         "http://localhost:5173",
         "http://localhost:5174",
         "http://127.0.0.1:5173",
