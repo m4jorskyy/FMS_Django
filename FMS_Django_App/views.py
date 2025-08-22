@@ -77,14 +77,14 @@ class UserListView(generics.ListAPIView):
     pagination_class = UserPagination
 
 
-# POST /api/users/create/           tworzenie nowego użytkownika (admin only)
+# POST /api/users/create/            tworzenie nowego użytkownika (admin only)
 class CreateUserView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [IsAdminUser]
 
 
-# DELETE  /api/users/delete/<nick>  usuwanie użytkownika (admin only)
+# DELETE  /api/users/<nick>/delete/  usuwanie użytkownika (admin only)
 class DestroyUserView(generics.DestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -113,7 +113,7 @@ class DestroyUserView(generics.DestroyAPIView):
             )
 
 
-# PATCH/PUT /api/users/edit/<nick>  edytowanie uż
+# PATCH/PUT /api/users/<nick>/edit/  edytowanie uż
 class UpdateUserView(generics.UpdateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -126,7 +126,7 @@ class UpdateUserView(generics.UpdateAPIView):
         return obj
 
 
-# GET  /api/users/<nick/            szczegóły użytkownika (konkretny user albo admin)
+# GET  /api/users/<nick>/            szczegóły użytkownika (konkretny user albo admin)
 class UserDetailView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     lookup_field = 'nick'
@@ -176,8 +176,46 @@ class PlayerDetailView(generics.RetrieveAPIView):
     def get_queryset(self):
         return Player.objects.all()
 
+# GET /api/players/<nick>/ranks
+class ListPlayerRanks(generics.ListAPIView):
+    serializer_class = SummonerNameSerializer
+    permission_classes = [AllowAny]
+    lookup_field = 'nick'
 
-# GET  /api/players/matches/<nick>/ historia meczów (public, paginowana)
+    def get_queryset(self):
+        nick = self.kwargs['nick']
+
+        try:
+            player = Player.objects.get(nick=nick)
+            return SummonerName.objects.filter(player=player).annotate(
+                tier_order=Case(
+                    When(tier="CHALLENGER", then=Value(0)),
+                    When(tier="GRANDMASTER", then=Value(1)),
+                    When(tier="MASTER", then=Value(2)),
+                    When(tier="DIAMOND", then=Value(3)),
+                    When(tier="EMERALD", then=Value(4)),
+                    When(tier="PLATINUM", then=Value(5)),
+                    When(tier="GOLD", then=Value(6)),
+                    When(tier="SILVER", then=Value(7)),
+                    When(tier="BRONZE", then=Value(8)),
+                    When(tier="IRON", then=Value(9)),
+                    When(tier="UNRANKED", then=Value(10)),
+                    default=Value(10),
+                    output_field=IntegerField()
+                ),
+                rank_order=Case(
+                    When(rank="I", then=Value(1)),
+                    When(rank="II", then=Value(2)),
+                    When(rank="III", then=Value(3)),
+                    When(rank="IV", then=Value(4)),
+                    default=Value(5),
+                    output_field=IntegerField()
+                )
+            ).order_by('tier_order', 'rank_order')
+        except Player.DoesNotExist:
+            return SummonerName.objects.none()
+
+# GET  /api/players/<nick>/matches/ historia meczów (public, paginowana)
 class MatchPagination(PageNumberPagination):
     page_size = 5
     page_size_query_param = 'page_size'
@@ -369,43 +407,3 @@ class CsrfView(RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         return Response(status=204)
-
-
-# GET /api/players/<nick>/ranks
-class ListPlayerRanks(generics.ListAPIView):
-    serializer_class = SummonerNameSerializer
-    permission_classes = [AllowAny]
-    lookup_field = 'nick'
-
-    def get_queryset(self):
-        nick = self.kwargs['nick']
-
-        try:
-            player = Player.objects.get(nick=nick)
-            return SummonerName.objects.filter(player=player).annotate(
-                tier_order=Case(
-                    When(tier="CHALLENGER", then=Value(0)),
-                    When(tier="GRANDMASTER", then=Value(1)),
-                    When(tier="MASTER", then=Value(2)),
-                    When(tier="DIAMOND", then=Value(3)),
-                    When(tier="EMERALD", then=Value(4)),
-                    When(tier="PLATINUM", then=Value(5)),
-                    When(tier="GOLD", then=Value(6)),
-                    When(tier="SILVER", then=Value(7)),
-                    When(tier="BRONZE", then=Value(8)),
-                    When(tier="IRON", then=Value(9)),
-                    When(tier="UNRANKED", then=Value(10)),
-                    default=Value(10),
-                    output_field=IntegerField()
-                ),
-                rank_order=Case(
-                    When(rank="I", then=Value(1)),
-                    When(rank="II", then=Value(2)),
-                    When(rank="III", then=Value(3)),
-                    When(rank="IV", then=Value(4)),
-                    default=Value(5),
-                    output_field=IntegerField()
-                )
-            ).order_by('tier_order', 'rank_order')
-        except Player.DoesNotExist:
-            return SummonerName.objects.none()
