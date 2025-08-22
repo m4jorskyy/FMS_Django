@@ -45,7 +45,7 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, min_length=8)
 
     class Meta:
         model = User
@@ -56,6 +56,9 @@ class RegisterSerializer(serializers.ModelSerializer):
             },
             'email': {
                 'validators': [UniqueValidator(queryset=User.objects.all())]
+            },
+            'nick': {
+                'validators': [UniqueValidator(queryset=User.objects.all())]
             }
         }
 
@@ -63,20 +66,23 @@ class RegisterSerializer(serializers.ModelSerializer):
         try:
             validate_password(value)
         except ValidationError as e:
-            raise serializers.ValidationError(e.message)
+            if hasattr(e, 'messages'):
+                raise serializers.ValidationError(e.messages)
+            elif hasattr(e, 'message'):
+                raise serializers.ValidationError([e.message])
+            else:
+                raise serializers.ValidationError([str(e)])
         return value
 
 
     def create(self, validated_data):
-        user = User(
-            first_name=validated_data['first_name'],
-            last_name=validated_data['last_name'],
+        return User.objects.create_user(
+            first_name=validated_data['first_name', ''],
+            last_name=validated_data['last_name', ''],
             email=validated_data['email'],
             nick=validated_data['nick'],
             password=make_password(validated_data['password'])
         )
-        user.save()
-        return user
 
 class PostSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
