@@ -69,7 +69,7 @@ AUTH_USER_MODEL = "FMS_Django_App.User"
 ROOT_URLCONF = 'FMS_Django_Init.urls'
 
 # CORS settings
-# CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True
 
 CSRF_COOKIE_NAME = "csrftoken"
 
