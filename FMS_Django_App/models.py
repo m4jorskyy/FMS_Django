@@ -81,12 +81,28 @@ class MatchParticipation(models.Model):
     win = models.BooleanField()
     lane = models.CharField(max_length=50)
 
+    class Meta:
+        # unique constraint tworzy z automatu index i zapewnia unikalnosc
+        constraints = [
+            models.UniqueConstraint(
+                fields=['match', 'summoner'],
+                name='unique_match_summoner'
+            )
+        ]
+
 
 class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     title = models.CharField(max_length=255)
     text = models.TextField()
     date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['-date'], name='added_post_date_idx')
+        ]
+
+        ordering = ['-date']
 
 class Newsletter(models.Model):
     email = models.EmailField(max_length=255, unique=True)

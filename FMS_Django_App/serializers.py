@@ -74,7 +74,6 @@ class RegisterSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError([str(e)])
         return value
 
-
     def create(self, validated_data):
         return User.objects.create_user(
             first_name=validated_data['first_name', ''],

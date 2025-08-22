@@ -292,7 +292,7 @@ class PostPagination(PageNumberPagination):
 
 
 class PostsView(generics.ListAPIView):
-    queryset = Post.objects.all().order_by("-date")
+    queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [AllowAny]
     pagination_class = PostPagination
