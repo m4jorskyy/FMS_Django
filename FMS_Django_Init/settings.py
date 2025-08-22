@@ -230,7 +230,7 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'pl-pl'
+LANGUAGE_CODE = 'en-gb'
 TIME_ZONE = 'Europe/Warsaw'
 USE_I18N = True
 USE_TZ = True
