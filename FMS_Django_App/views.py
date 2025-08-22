@@ -199,7 +199,7 @@ class ListMatchesView(generics.ListAPIView):
         ).select_related('match').order_by('-match__game_start')
 
 
-# POST /api/players/create/<nick>     tworzenie nowego zawodnika z dashboarda admina
+# POST /api/players/create/         tworzenie nowego zawodnika z dashboarda admina
 class CreatePlayerView(generics.CreateAPIView):
     queryset = Player.objects.all()
     serializer_class = PlayerSerializer

@@ -12,7 +12,7 @@ urlpatterns = [
     path('users/create/', views.CreateUserView.as_view(), name='create_user'),
 
     # DELETE /api/users/delete/<nick>/  usuwanie użytkownika (admin only)
-    path('users/delete/<str:nick>/', views.DestroyUserView.as_view(), name='delete_user'),
+    path('users/<str:nick>/delete/', views.DestroyUserView.as_view(), name='delete_user'),
 
     # PUT/PATCH /api/users/edit/<nick>/ edytowanie użytkownika (user albo admin)
     path('users/edit/<str:nick>/', views.UpdateUserView.as_view(), name='edit_user'),
