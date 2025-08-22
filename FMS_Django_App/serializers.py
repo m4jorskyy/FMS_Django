@@ -1,6 +1,10 @@
 #serializers.py
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
+
 from .models import Player, User, Post, Match, MatchParticipation, Newsletter, SummonerName
 import bleach
 
@@ -49,8 +53,19 @@ class RegisterSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'role': {
                 'read_only': True
+            },
+            'email': {
+                'validators': [UniqueValidator(queryset=User.objects.all())]
             }
         }
+
+    def validate_password(self, value):
+        try:
+            validate_password(value)
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message)
+        return value
+
 
     def create(self, validated_data):
         user = User(
