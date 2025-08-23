@@ -321,6 +321,7 @@ if UPSTASH_REDIS_REST_URL and not DEBUG:
                     'socket_timeout': 5,
                 },
                 'IGNORE_EXCEPTIONS': True,
+                'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
             },
             'TIMEOUT': 300,
         }
