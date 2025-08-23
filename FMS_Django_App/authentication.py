@@ -7,14 +7,6 @@ from .models import User
 
 class JWTAuthentication(BaseAuthentication):
     def authenticate(self, request):
-        # Skip JWT authentication for admin URLs - let Django handle it
-        if request.path.startswith('/admin/'):
-            return None
-
-        # Skip JWT authentication for non-API URLs
-        if not request.path.startswith('/api/'):
-            return None
-
         # Najpierw sprawdź Authorization header
         auth_header = request.META.get('HTTP_AUTHORIZATION')
         token = None
