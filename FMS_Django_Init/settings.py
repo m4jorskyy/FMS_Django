@@ -306,10 +306,9 @@ else:
         },
     }
 
-UPSTASH_REDIS_REST_URL =  str(os.getenv("UPSTASH_REDIS_REST_URL"))
-UPSTASH_REDIS_REST_TOKEN = str(os.getenv("UPSTASH_REDIS_REST_TOKEN"))
+UPSTASH_REDIS_REST_URL = str(os.getenv("UPSTASH_REDIS_REST_URL"))
 
-if UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN:
+if UPSTASH_REDIS_REST_URL and not DEBUG:
     CACHES = {
         'default': {
             'BACKEND': 'django_redis.cache.RedisCache',
@@ -317,24 +316,21 @@ if UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN:
             'OPTIONS': {
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient',
                 'CONNECTION_POOL_KWARGS': {
-                    'ssl_cert_reqs': None,
                     'retry_on_timeout': True,
+                    'socket_connect_timeout': 5,
+                    'socket_timeout': 5,
                 },
-                'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
                 'IGNORE_EXCEPTIONS': True,
             },
-            'KEY_PREFIX': 'fms',
             'TIMEOUT': 300,
         }
     }
 else:
+    # Development
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'fms-dev-cache',
         }
     }
 
-# Session cache
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'default'
