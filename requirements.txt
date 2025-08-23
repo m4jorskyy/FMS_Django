@@ -11,3 +11,7 @@ gunicorn
 whitenoise
 dj-database-url
 bleach
+
+django-redis==5.4.0
+redis==5.0.1
+upstash-redis==0.15.0

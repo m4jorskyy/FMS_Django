@@ -15,6 +15,7 @@ from datetime import timedelta
 import os
 from dotenv import load_dotenv
 import dj_database_url
+import redis
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -300,14 +301,39 @@ else:
         'loggers': {
             'django.db.backends': {
                 'handlers': ['console'],
-                'level': 'INFO',
+                'level': 'DEBUG',
             },
         },
     }
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'cache_table',
+UPSTASH_REDIS_REST_URL =  str(os.getenv("UPSTASH_REDIS_REST_URL"))
+UPSTASH_REDIS_REST_TOKEN = str(os.getenv("UPSTASH_REDIS_REST_TOKEN"))
+
+if UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': UPSTASH_REDIS_REST_URL,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'CONNECTION_POOL_KWARGS': {
+                    'ssl_cert_reqs': None,
+                    'retry_on_timeout': True,
+                },
+                'PARSER_CLASS': 'redis.connection.HiredisParser',
+            },
+            'KEY_PREFIX': 'fms',
+            'TIMEOUT': 300,
+        }
     }
-}
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'fms-dev-cache',
+        }
+    }
+
+# Session cache
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
