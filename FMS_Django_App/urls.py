@@ -26,6 +26,9 @@ urlpatterns = [
     # GET  /api/players/                lista graczy (public)
     path('players/', views.PlayerListView.as_view(), name='player_list'),
 
+    # POST api/players/create/   utworzenie gracza
+    path('players/create/', views.CreatePlayerView.as_view(), name='create_player'),
+
     # GET  /api/players/<nick>/         szczegóły gracza (zalogowany)
     path('players/<str:nick>/', views.PlayerDetailView.as_view(), name='player_detail'),
 
@@ -34,9 +37,6 @@ urlpatterns = [
 
     # GET  /api/players/<nick>/matches/  historia meczów (public, paginowana)
     path('players/<str:nick>/matches/', views.ListMatchesView.as_view(), name='player_matches'),
-
-    # POST api/players/create/   utworzenie gracza
-    path('players/create/', views.CreatePlayerView.as_view(), name='create_player'),
 
     # POST /api/register/               rejestracja nowego konta (public)
     path('register/', views.RegisterView.as_view(), name='register'),
