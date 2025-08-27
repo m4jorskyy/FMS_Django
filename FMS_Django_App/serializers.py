@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from .models import Player, User, Post, Match, MatchParticipation, Newsletter, SummonerName
+from .models import Player, User, Post, Match, MatchParticipation, Newsletter, SummonerName, PlayerOfficialStats
 import bleach
 
 ALLOWED_TAGS = ['b','i','em','strong','u','a','p','ul','ol','li','br','blockquote','code','pre', 'h1', 'h2']
@@ -26,7 +26,6 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'nick', 'email', 'password', 'role']
-        read_only_fields = ['role']
         extra_kwargs ={
             'password': {
                 'write_only': True,
@@ -140,3 +139,113 @@ class SummonerNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = SummonerName
         fields = ['riot_id', 'puuid', 'player', 'tier', 'rank', 'league_points']
+
+
+class PlayerOfficialStatsSerializer(serializers.ModelSerializer):
+    kda = serializers.SerializerMethodField()
+    cs_per_min = serializers.SerializerMethodField()
+    damage_per_min = serializers.SerializerMethodField()
+    kill_participation = serializers.SerializerMethodField()
+    gold_participation = serializers.SerializerMethodField()
+    dmg_participation = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PlayerOfficialStats
+        fields = '__all__'
+
+    def get_kda(self, obj):
+        if obj.deaths == 0:
+            return (obj.kills + obj.assists)  # Perfect KDA
+        return round((obj.kills + obj.assists) / obj.deaths, 2)
+
+    def get_cs_per_min(self, obj):
+        if not obj.gamelength or obj.gamelength.total_seconds() == 0:
+            return 0
+        game_minutes = obj.gamelength.total_seconds() / 60
+        return round(obj.cs / game_minutes, 1)
+
+    def get_damage_per_min(self, obj):
+        if not obj.gamelength or obj.gamelength.total_seconds() == 0:
+            return 0
+        game_minutes = obj.gamelength.total_seconds() / 60
+        return round(obj.damage_to_champions / game_minutes, 1)
+
+    def get_kill_participation(self, obj):
+        if obj.team_kills == 0:
+            return 0
+        return round(((obj.kills + obj.assists) / obj.team_kills) * 100, 1)
+
+    def get_gold_participation(self, obj):
+        if obj.team_gold == 0:
+            return 0
+        return round((obj.gold / obj.team_gold) * 100, 1)
+
+    def get_dmg_participation(self, obj):
+        if obj.team_damage_to_champions == 0:
+            return 0
+        return round((obj.damage_to_champions / obj.team_damage_to_champions) * 100, 1)
+
+class PlayerAggregatedStatsSerializer(serializers.Serializer):
+    total_matches = serializers.IntegerField()
+    total_kills = serializers.IntegerField()
+    total_deaths = serializers.IntegerField()
+    total_assists = serializers.IntegerField()
+    total_cs = serializers.IntegerField()
+    total_gold = serializers.IntegerField()
+    total_team_gold = serializers.IntegerField()
+    total_damage = serializers.IntegerField()
+    total_team_damage = serializers.IntegerField()
+    total_vision_score = serializers.IntegerField()
+    wins = serializers.IntegerField()
+
+    # Calculated fields
+    avg_kda = serializers.SerializerMethodField()
+    avg_cs_per_min = serializers.SerializerMethodField()
+    avg_damage_per_min = serializers.SerializerMethodField()
+    win_rate = serializers.SerializerMethodField()
+    avg_kill_participation = serializers.SerializerMethodField()
+    avg_gold_participation = serializers.SerializerMethodField()
+    avg_dmg_participation = serializers.SerializerMethodField()
+    avg_vision_score = serializers.SerializerMethodField()
+
+    def get_avg_kda(self, obj):
+        if obj['total_deaths'] == 0:
+            return "Perfect"
+        return round((obj['total_kills'] + obj['total_assists']) / obj['total_deaths'], 2)
+
+    def get_avg_cs_per_min(self, obj):
+        total_minutes = obj['total_gamelength'].total_seconds() / 60 if obj['total_gamelength'] else 0
+        if total_minutes == 0:
+            return 0
+        return round(obj['total_cs'] / total_minutes, 1)
+
+    def get_win_rate(self, obj):
+        if obj['total_matches'] == 0:
+            return 0
+        return round((obj['wins'] / obj['total_matches']) * 100, 1)
+
+    def get_avg_damage_per_min(self, obj):
+        total_minutes=obj['total_gamelength'].total_seconds() / 60 if obj['total_gamelength'] else 0
+        if total_minutes == 0:
+            return 0
+        return round((obj['total_damage'] / total_minutes), 1)
+
+    def get_avg_kill_participation(self, obj):
+        if obj['total_team_kills'] == 0:
+            return 0
+        return round(((obj['total_kills'] + obj['total_assists']) / obj['total_team_kills']) * 100, 1)
+
+    def get_avg_gold_participation(self, obj):
+        if obj['total_team_gold'] == 0:
+            return 0
+        return round((obj['total_gold'] / obj['total_team_gold']) * 100, 1)
+
+    def get_avg_dmg_participation(self, obj):
+        if obj['total_team_damage'] == 0:
+            return 0
+        return round((obj['total_damage'] / obj['total_team_damage']) * 100, 1)
+
+    def get_avg_vision_score(self, obj):
+        if obj['total_matches'] == 0:
+            return 0
+        return round((obj['total_vision_score'] / obj['total_matches']), 1)

@@ -1,6 +1,12 @@
 # views.py
+import hashlib
+import json
 import os
 from datetime import datetime, timedelta
+from django.core.cache import cache
+
+from django.db.models import Avg, Count, Sum, Q, F
+
 import jwt
 import requests
 from django.conf import settings
@@ -17,9 +23,10 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from .serializers import UserSerializer, PlayerSerializer, LoginSerializer, PostSerializer, \
-    MatchParticipationSerializer, RegisterSerializer, NewsletterSerializer, SummonerNameSerializer
+    MatchParticipationSerializer, RegisterSerializer, NewsletterSerializer, SummonerNameSerializer, \
+    PlayerOfficialStatsSerializer, PlayerAggregatedStatsSerializer
 from rest_framework import generics, status
-from .models import User, Player, Post, SummonerName, MatchParticipation, Newsletter
+from .models import User, Player, Post, SummonerName, MatchParticipation, Newsletter, PlayerOfficialStats
 
 """
 GET → get() method (list/retrieve)
@@ -28,7 +35,6 @@ PUT → put() method (update)
 PATCH → patch() method (partial update)
 DELETE → delete() method (destroy)
 """
-
 
 class HasSpecificRolePermission(BasePermission):
     required_role = None
@@ -113,7 +119,7 @@ class DestroyUserView(generics.DestroyAPIView):
             )
 
 
-# PATCH/PUT /api/users/edit/<nick>  edytowanie uż
+# PATCH/PUT /api/users/edit/<nick>  edytowanie użytkownika
 class UpdateUserView(generics.UpdateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -126,7 +132,7 @@ class UpdateUserView(generics.UpdateAPIView):
         return obj
 
 
-# GET  /api/users/<nick/            szczegóły użytkownika (konkretny user albo admin)
+# GET  /api/users/<nick>/            szczegóły użytkownika (konkretny user albo admin)
 class UserDetailView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     lookup_field = 'nick'
@@ -409,3 +415,112 @@ class ListPlayerRanks(generics.ListAPIView):
             ).order_by('tier_order', 'rank_order')
         except Player.DoesNotExist:
             return SummonerName.objects.none()
+
+def generate_cache_key(player, filters, page=1):
+    clean_filters = {k: v for k, v in filters.items() if v}
+    clean_filters['page'] = page
+    filter_string = json.dumps(clean_filters, sort_keys=True)
+    return f"player_stats:{player}:{hashlib.md5(filter_string.encode()).hexdigest()}"
+
+class PlayerOfficialStatsPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = 'page_size'
+    max_page_size = 20
+
+class AggregatedPlayerStatsView(APIView):
+    serializer_class = PlayerOfficialStatsSerializer
+    permission_classes = [AllowAny]
+    lookup_field = 'nick'
+    pagination_class = PlayerOfficialStatsPagination
+
+    def get(self, request, nick):
+        filters={
+            'champion': request.GET.get('champion'),
+            'year': request.GET.get('year'),
+            'tournament': request.GET.get('tournament'),
+            'team_vs': request.GET.get('team_vs')
+        }
+
+        page = request.GET.get('page', 1)
+        cache_key = generate_cache_key(nick, filters, page)
+
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data)
+
+        stats = PlayerOfficialStats.objects.filter(
+            player__nick__iexact=nick
+        ).select_related('player')
+
+        if filters['champion']:
+            stats = stats.filter(champion__iexact=filters['champion'])
+
+        if filters['year']:
+            stats = stats.filter(datetime_utc__year=filters['year'])
+
+        if filters['tournament']:
+            stats = stats.filter(tournament__contains=filters['tournament'])
+
+        if filters['team_vs']:
+            stats = stats.filter(team_vs__contains=filters['team_vs'])
+
+        aggregated_stats = stats.aggregate(
+            total_matches=Count('id'),
+            total_kills=Sum('kills'),
+            total_deaths=Sum('deaths'),
+            total_assists=Sum('assists'),
+            total_cs=Sum('cs'),
+            total_gold=Sum('gold'),
+            total_damage=Sum('damage_to_champions'),
+            total_team_damage=Sum('team_damage_to_champions'),
+            total_vision_score=Sum('vision_score'),
+            total_team_kills=Sum('team_kills'),
+            total_team_gold=Sum('team_gold'),
+            total_gamelength=Sum('gamelength'),
+            wins=Count('id', filter=Q(winner=F('side')))
+        )
+
+        paginator = PlayerOfficialStatsPagination()
+
+        matches = paginator.paginate_queryset(
+            stats.order_by('-datetime_utc'),
+            request
+        )
+
+        match_serializer = PlayerOfficialStatsSerializer(matches, many=True)
+
+        aggregated_serializer=PlayerAggregatedStatsSerializer(aggregated_stats)
+
+        response_data = {
+            'aggregated_stats': aggregated_serializer.data,
+            'matches': {
+                'results': match_serializer.data,
+                'count': paginator.page.paginator.count,
+                'next': paginator.get_next_link(),
+                'previous': paginator.get_previous_link(),
+            }
+        }
+
+        cache.set(cache_key, response_data, timeout=3600)
+        return Response(response_data)
+
+class PlayerFilterOptionsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, nick):
+        cache_key = f"player_filter_options:{nick}"
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data)
+
+        stats = PlayerOfficialStats.objects.filter(player__nick__iexact=nick)
+
+        options = {
+            'years': sorted(list(stats.dates('datetime_utc', 'year').values_list('datetime_utc__year', flat=True).distinct())),
+            'tournaments': sorted(list(stats.values_list('tournament', flat=True).distinct())),
+            'champions': sorted(list(stats.values_list('champion', flat=True).distinct())),
+            'teams_vs': sorted(list(stats.values_list('team_vs', flat=True).distinct()))
+        }
+
+        cache.set(cache_key, options, timeout=7200)
+        return Response(options)

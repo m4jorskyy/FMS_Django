@@ -38,6 +38,12 @@ urlpatterns = [
     # GET  /api/players/<nick>/matches/  historia meczów (public, paginowana)
     path('players/<str:nick>/matches/', views.ListMatchesView.as_view(), name='player_matches'),
 
+    # GET /api/players/<nick>/official_stats/ historia i statystyki oficjalnych meczy
+    path('players/<str:nick>/official_stats/', views.AggregatedPlayerStatsView.as_view(), name='official_player_match'),
+
+    # GET /api/players/<nick>/official_stats/   opcje filtrow
+    path('players/<str:nick>/official_stats/options/', views.PlayerFilterOptionsView.as_view(), name='player_filter_options'),
+
     # POST /api/register/               rejestracja nowego konta (public)
     path('register/', views.RegisterView.as_view(), name='register'),
 
@@ -66,5 +72,5 @@ urlpatterns = [
     path('officialmatches/', views.ListOfficialMatches.as_view(), name='get_official_matches'),
 
     # GET /api/csrf                     csrf token (public)
-    path('csrf/', views.CsrfView.as_view(), name="get_csrf_token"),
+    path('csrf/', views.CsrfView.as_view(), name="get_csrf_token")
 ]

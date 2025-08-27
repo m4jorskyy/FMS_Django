@@ -107,3 +107,43 @@ class Post(models.Model):
 class Newsletter(models.Model):
     email = models.EmailField(max_length=255, unique=True)
     created_at=models.DateTimeField(auto_now_add=True)
+
+class PlayerOfficialStats(models.Model):
+    game_id = models.CharField(max_length=255)
+    tournament = models.CharField(max_length=255)
+    datetime_utc = models.DateTimeField()
+    patch = models.CharField(max_length=50)
+    gamelength = models.DurationField()
+    winner = models.IntegerField()
+    side = models.IntegerField()
+    team_vs = models.CharField(max_length=255)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="players_official_stats")
+    role = models.CharField(max_length=50)
+    champion = models.CharField(max_length=100)
+    kills = models.IntegerField()
+    deaths = models.IntegerField()
+    assists = models.IntegerField()
+    cs = models.IntegerField()
+    gold = models.IntegerField()
+    damage_to_champions = models.IntegerField()
+    team_damage_to_champions = models.IntegerField()
+    vision_score = models.IntegerField()
+    team_kills = models.IntegerField()
+    team_gold = models.IntegerField()
+    items = models.JSONField()
+    primary_tree = models.CharField(max_length=100)
+    secondary_tree = models.CharField(max_length=100)
+    runes = models.JSONField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["game_id", "player"], name="unique_game_player")
+        ]
+
+        indexes = [
+            models.Index(fields=['player', 'champion']),
+            models.Index(fields=['player', 'datetime_utc']),
+            models.Index(fields=['player', 'tournament']),
+            models.Index(fields=['player', 'team_vs']),
+            models.Index(fields=['datetime_utc'])
+        ]

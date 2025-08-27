@@ -10,8 +10,9 @@ PyJWT~=2.10.1
 gunicorn
 whitenoise
 dj-database-url
-bleach
+bleach~=6.1.0
 
 django-redis==5.4.0
 redis==5.0.1
 upstash-redis==0.15.0
+mwrogue~=0.1.5
