@@ -257,9 +257,10 @@ class LoginView(generics.CreateAPIView):
                 response.set_cookie(
                     key="access_token",
                     value=token,
+                    domain='.fms-project.fun',
                     httponly=True,
                     secure=not settings.DEBUG,
-                    samesite="None",
+                    samesite="Lax",
                     max_age=24 * 60 * 60,
                     path="/"
                 )
