@@ -13,7 +13,7 @@ from django.conf import settings
 from django.db.models import Case, When, Value, IntegerField
 from django.http import Http404
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.pagination import PageNumberPagination
@@ -213,6 +213,7 @@ class CreatePlayerView(generics.CreateAPIView):
 
 
 # POST /api/register/               rejestracja nowego konta (public)
+@method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
@@ -220,6 +221,7 @@ class RegisterView(generics.CreateAPIView):
 
 
 # POST /api/login/                  logowanie (public)
+@method_decorator(csrf_exempt, name='dispatch')
 class LoginView(generics.CreateAPIView):
     serializer_class = LoginSerializer
     permission_classes = [AllowAny]
