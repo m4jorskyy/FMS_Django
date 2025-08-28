@@ -213,7 +213,6 @@ class CreatePlayerView(generics.CreateAPIView):
 
 
 # POST /api/register/               rejestracja nowego konta (public)
-@method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
@@ -221,7 +220,6 @@ class RegisterView(generics.CreateAPIView):
 
 
 # POST /api/login/                  logowanie (public)
-@method_decorator(csrf_exempt, name='dispatch')
 class LoginView(generics.CreateAPIView):
     serializer_class = LoginSerializer
     permission_classes = [AllowAny]
