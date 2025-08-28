@@ -259,7 +259,7 @@ class LoginView(generics.CreateAPIView):
                     value=token,
                     httponly=True,
                     secure=not settings.DEBUG,
-                    samesite="Lax",
+                    samesite="None",
                     max_age=24 * 60 * 60,
                     path="/"
                 )
