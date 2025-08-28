@@ -79,7 +79,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             last_name=validated_data.get('last_name', ''),
             email=validated_data['email'],
             nick=validated_data['nick'],
-            password=make_password(validated_data['password'])
+            password=validated_data['password']
         )
 
 class PostSerializer(serializers.ModelSerializer):
