@@ -36,7 +36,8 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     'fms-django.onrender.com',
-    'fms-django-1.onrender.com'
+    'fms-django-1.onrender.com',
+    'api.fms-project.fun'
 ]
 
 # Application definition
