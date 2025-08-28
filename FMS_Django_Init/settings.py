@@ -93,15 +93,18 @@ if DEBUG:
     ]
 else:
     CORS_ALLOWED_ORIGINS = [
+        "https://app.fms-project.fun",
         "https://fms-react-eight.vercel.app",
         "https://fms-react-10ij7j509-m4jorskyys-projects.vercel.app",
         "http://localhost:5173",
         "http://localhost:5174",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:5174",
+        
     ]
 
     CSRF_TRUSTED_ORIGINS = [
+        "https://app.fms-project.fun",
         "https://fms-react-eight.vercel.app",
         "https://fms-react-10ij7j509-m4jorskyys-projects.vercel.app",
         "http://localhost:5173",
@@ -164,8 +167,8 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     CSRF_COOKIE_HTTPONLY = False
-    SESSION_COOKIE_SAMESITE = 'None'
-    CSRF_COOKIE_SAMESITE = 'None'
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_SAMESITE = 'Lax'
 
     # Frame protection
     X_FRAME_OPTIONS = 'DENY'
@@ -173,6 +176,9 @@ if not DEBUG:
     # Additional security settings
     SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
     SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
+
+    SESSION_COOKIE_DOMAIN = '.fms-project.fun'
+    CSRF_COOKIE_DOMAIN = '.fms-project.fun'
 
 else:
     # Development settings - więcej swobody dla debugowania
