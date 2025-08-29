@@ -1,223 +1,235 @@
-# FMS Django Project
+# 🗂️ FMS Django Backend
 
-A Django REST API application for tracking League of Legends player statistics, match data, and providing blog functionality. The system integrates with Riot Games API and PandaScore API to collect and analyze player performance data.
-
-## Features
-
-- **Player Management**: Track League of Legends players with their summoner names, ranks, and social media links
-- **Match Tracking**: Store and analyze match participation data with detailed statistics
-- **Official Statistics**: Integration with PandaScore API for professional match data
-- **User System**: Custom user authentication with role-based permissions
-- **Blog System**: Post creation and management with content sanitization
-- **Newsletter**: Email subscription functionality
-- **Security**: Comprehensive security headers and JWT authentication
-
-## Models Overview
-
-### Core Models
-
-- **User**: Custom user model with role-based permissions (USER, EDITOR, ADMIN)
-- **Player**: League of Legends players with personal information and social media links
-- **SummonerName**: Riot IDs associated with players, including rank information
-- **Match**: Individual match records with game duration and timestamps
-- **MatchParticipation**: Player performance in specific matches
-- **PlayerOfficialStats**: Detailed professional match statistics from tournaments
-- **Post**: Blog posts with author attribution and content sanitization
-- **Newsletter**: Email subscription management
-
-## API Endpoints
-
-### Authentication
-- `POST /api/register/` - User registration (public)
-- `POST /api/login/` - User login (public)
-- `POST /api/logout/` - User logout (authenticated)
-- `GET /api/me/` - Current user information (authenticated)
-- `GET /api/csrf/` - CSRF token (public)
-
-### User Management
-- `GET /api/users/` - List all users (admin only)
-- `POST /api/users/create/` - Create new user (admin only)
-- `GET /api/users/<nick>/` - User details (owner or admin)
-- `PUT/PATCH /api/users/<nick>/edit/` - Edit user (owner or admin)
-- `DELETE /api/users/<nick>/delete/` - Delete user (admin only)
-- `GET /api/users/me/posts/` - Current user's posts (authenticated)
-
-### Player Management
-- `GET /api/players/` - List all players (public)
-- `POST /api/players/create/` - Create new player (admin only)
-- `GET /api/players/<nick>/` - Player details (authenticated)
-- `GET /api/players/<nick>/ranks/` - Player rank information (public)
-- `GET /api/players/<nick>/matches/` - Player match history (public, paginated)
-- `GET /api/players/<nick>/official_stats/` - Aggregated official statistics (public)
-- `GET /api/players/<nick>/official_stats/options/` - Available filter options (public)
-
-### Blog System
-- `GET /api/posts/` - List all posts (public, paginated)
-- `POST /api/posts/create/` - Create new post (editor or admin)
-- `PUT/PATCH /api/posts/<pk>/edit/` - Edit post (author or admin)
-- `DELETE /api/posts/<pk>/delete/` - Delete post (author or admin)
-
-### Newsletter
-- `POST /api/newsletter/` - Subscribe to newsletter (public)
-
-### External Data
-- `GET /api/officialmatches/` - Fetch official matches from PandaScore API (public)
-
-## Authentication & Security
-
-### JWT Authentication
-The application uses custom JWT authentication supporting both:
-- Authorization header: `Bearer <token>`
-- HTTP-only cookies for web applications
-
-### Security Features
-- **Content Security Policy (CSP)**: Different policies for development and production
-- **Permissions Policy**: Comprehensive feature restrictions
-- **Security Headers**: XSS protection, frame options, content type sniffing protection
-- **HTTPS Enforcement**: Strict transport security in production
-- **Content Sanitization**: HTML sanitization for blog posts using bleach
-
-### Rate Limiting
-- Anonymous users: 100 requests/hour
-- Authenticated users: 500 requests/hour
-- Login attempts: 5 attempts/minute
-- Newsletter signup: 3 attempts/day
-- PandaScore API: 60 requests/minute
-- Post creation: 20 posts/hour
-
-## Installation & Setup
-
-### Prerequisites
-- Python 3.8+
-- PostgreSQL
-- Redis (for production caching)
-
-### Environment Variables
-Create a `.env` file with the following variables:
-
-```env
-DJANGO_SECRET_KEY=your_secret_key_here
-DEBUG=True
-DB_NAME=your_database_name
-DB_USER=your_database_user
-DB_PASSWORD=your_database_password
-DB_HOST=your_database_host
-DATABASE_URL=your_database_url (optional, overrides individual DB settings)
-PANDASCORE_API_KEY=your_pandascore_api_key
-UPSTASH_REDIS_REST_URL=your_redis_url (production only)
-```
-
-### Installation Steps
-
-1. Clone the repository
-2. Create virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. Install dependencies:
-   ```bash
-   pip install django djangorestframework python-decouple psycopg2-binary
-   pip install django-cors-headers python-dotenv dj-database-url
-   pip install redis django-redis whitenoise bleach PyJWT
-   ```
-
-4. Set up database:
-   ```bash
-   python manage.py makemigrations
-   python manage.py migrate
-   ```
-
-5. Create superuser:
-   ```bash
-   python manage.py createsuperuser
-   ```
-
-6. Run development server:
-   ```bash
-   python manage.py runserver
-   ```
-
-## Key Features
-
-### Player Statistics
-The system provides comprehensive player analytics including:
-- KDA (Kill/Death/Assist) ratios
-- CS (Creep Score) per minute
-- Damage per minute
-- Kill participation percentage
-- Gold participation percentage
-- Vision score tracking
-
-### Data Aggregation
-Player statistics are aggregated with filtering options by:
-- Champion
-- Year
-- Tournament
-- Opposing team
-
-### Caching
-Production environment uses Redis for caching:
-- Player filter options cached for 2 hours
-- Aggregated statistics cached for 1 hour
-- Development uses local memory caching
-
-### Content Management
-- Rich text support for blog posts with HTML sanitization
-- Automatic link detection and safe rendering
-- Author attribution and timestamp tracking
-
-## Admin Interface
-
-The Django admin interface provides management for all models:
-- Players with inline summoner name management
-- User management with role assignments
-- Match and participation data
-- Blog post moderation
-- Newsletter subscriber management
-- Official statistics monitoring
-
-## Production Deployment
-
-### Security Considerations
-- HTTPS enforcement with HSTS
-- Secure cookie configuration
-- Comprehensive CSP implementation
-- Rate limiting and throttling
-- SQL injection protection through ORM
-
-### Performance Optimization
-- Database indexing for frequently queried fields
-- Redis caching for expensive operations
-- Pagination for large datasets
-- Static file compression with WhiteNoise
-
-## User Roles
-
-- **USER**: Basic authenticated user
-- **EDITOR**: Can create and manage blog posts
-- **ADMIN**: Full system access including user and player management
-
-## External API Integration
-
-### PandaScore API
-Used for fetching official tournament match data with team and player statistics.
-
-### Riot Games API
-Designed to integrate with Riot's API for summoner information and match history (implementation details in related services).
-
-## Live Deployment
-
-The API is currently deployed and accessible at:
-- **Primary Domain**: https://api.fms-project.fun/
-- **Backup Domain**: https://fms-django-1.onrender.com/
-
-### API Base URLs
-Use either of the above URLs as the base URL for API calls. For example:
-- `GET https://api.fms-project.fun/api/players/` - List all players
-- `POST https://api.fms-project.fun/api/login/` - User login
+A production-ready **Django REST API** that powers the FMS League of Legends portfolio site.  
+Handles authentication, player & match data, tournament statistics, content management and integrates with **Riot Games**, **Leaguepedia** and **Pandascore** APIs.
 
 ---
 
-**Note**: This is a backend API. You'll need a separate frontend application to provide a user interface for this system.
+## 🚀 Live API
+```bash
+https://api.fms-project.fun
+```
+
+---
+
+## 📋 Table of Contents
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Quick Start](#-quick-start)
+- [Project Structure](#-project-structure)
+- [Environment Variables](#-environment-variables)
+- [API Overview](#-api-overview)
+- [Authentication & Permissions](#-authentication--permissions)
+- [Caching & Performance](#-caching--performance)
+- [Deployment Notes](#-deployment-notes)
+
+---
+
+## ✨ Features
+| Domain | Highlights |
+|--------|------------|
+| **Authentication** | JWT access tokens + CSRF cookies, role-based access (USER / EDITOR / ADMIN) |
+| **Player Data** | CRUD for players, summoners, ranks, social links |
+| **Match Stats** | Solo-queue matches from Riot API, official tournament stats from Leaguepedia |
+| **Content** | Markdown blog posts, newsletter subscriptions |
+| **External APIs** | Auto-sync with Riot, Leaguepedia & Pandascore |
+| **Admin Panel** | Rich Django-admin with inline editing |
+| **Caching** | Redis-backed caching for heavy stats endpoints |
+| **Security** | CSP, HSTS, rate-limiting, secure cookies |
+
+---
+
+## 🛠 Tech Stack
+| Layer | Technology |
+|-------|------------|
+| Framework | Django 5.2 + Django REST Framework |
+| Database | PostgreSQL (with SSL) |
+| Cache | Upstash Redis (prod) / LocMem (dev) |
+| Auth | djangorestframework-simplejwt |
+| Security | django-cors-headers, custom middleware |
+| External | `requests`, `mwrogue`, `bleach`, `python-dotenv` |
+| WSGI | Gunicorn + WhiteNoise |
+
+---
+
+## 🏗 Quick Start
+
+### 1. Clone & Install
+```bash
+git clone https://github.com/your-username/fms-django-backend.git
+cd fms-django-backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 2. Environment
+Copy `.env.example` → `.env` and fill:
+
+```env
+DEBUG=True
+DJANGO_SECRET_KEY=your-secret-key
+DB_NAME=fms_db
+DB_USER=fms_user
+DB_PASSWORD=pass
+DB_HOST=localhost
+RIOT_API_KEY=RGAPI-xxxxxxxxxxxx
+PANDASCORE_API_KEY=xxxxxxxxxxxx
+UPSTASH_REDIS_REST_URL=https://your-upstash-url
+```
+
+### 3. Database
+```bash
+python manage.py migrate
+python manage.py createsuperuser
+```
+
+### 4. Run
+```bash
+python manage.py runserver
+```
+API now available at `http://localhost:8000/api/`
+
+---
+
+## 📁 Project Structure
+```
+FMS_Django_Init/
+├── FMS_Django_App/
+│   ├── migrations/
+│   ├── management/
+│   │   └── commands/
+│   │       ├── fetch_matches.py
+│   │       ├── fetch_player_stats.py
+│   │       └── fetch_puuids.py
+│   ├── models.py
+│   ├── serializers.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── authentication.py
+│   └── middleware.py
+├── FMS_Django_Init/
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── requirements.txt
+└── manage.py
+```
+
+---
+
+## 🔐 Environment Variables
+| Variable | Purpose |
+|----------|---------|
+| `DEBUG` | Toggle dev vs prod settings |
+| `DJANGO_SECRET_KEY` | Django signing key |
+| `DATABASE_URL` | **Optional** Render/Supabase connection string |
+| `RIOT_API_KEY` | Fetch solo-queue matches & ranks |
+| `PANDASCORE_API_KEY` | Official tournament matches |
+| `UPSTASH_REDIS_REST_URL` | Redis cache (prod) |
+
+---
+
+## ⚙️ Management Commands
+Run these periodically (cron / GitHub Actions):
+
+| Command | Description |
+|---------|-------------|
+| `python manage.py fetch_puuids` | Resolve Riot PUUIDs for all stored `riot_id`s |
+| `python manage.py fetch_matches` | Pull latest 20 solo-queue matches per summoner |
+| `python manage.py fetch_player_stats <nick>` | Import official stats from Leaguepedia |
+
+---
+
+## 📡 API Overview
+All endpoints live under `/api/`
+
+### 🔑 Auth
+```
+POST /api/register/
+POST /api/login/           → sets HttpOnly JWT cookie
+POST /api/logout/          → clears cookie
+GET  /api/me/              → current user info
+```
+
+### 👥 Users (Admin)
+```
+GET    /api/users/
+POST   /api/users/create/
+GET    /api/users/<nick>/
+PUT    /api/users/<nick>/edit/
+DELETE /api/users/<nick>/delete/
+```
+
+### 🎮 Players & Stats
+```
+GET /api/players/
+GET /api/players/<nick>/
+GET /api/players/<nick>/ranks/
+GET /api/players/<nick>/matches/          (paginated)
+GET /api/players/<nick>/official_stats/   (aggregated + paginated matches)
+GET /api/players/<nick>/official_stats/options/  (filter values)
+```
+
+### 📝 Content
+```
+GET  /api/posts/
+POST /api/posts/create/
+PUT  /api/posts/<id>/edit/
+DELETE /api/posts/<id>/delete/
+POST /api/newsletter/
+```
+
+### 🏆 Official Matches
+```
+GET /api/officialmatches/?team_id=136773&status=not_started&page=1
+```
+
+---
+
+## 🔐 Authentication & Permissions
+| Role | Capabilities |
+|------|--------------|
+| **USER** | view public data, edit own profile |
+| **EDITOR** | create/edit own posts |
+| **ADMIN** | full CRUD on users, players, posts |
+
+JWT is returned in **HttpOnly cookie** (`access_token`) and validated via custom `JWTAuthentication` class.
+
+---
+
+## 🚀 Caching & Performance
+- **Redis** (Upstash) in production – 1 h TTL for stats, 2 h for filter options.  
+- **LocMem** in development.  
+- Cache keys include hashed filter strings to guarantee uniqueness.
+
+---
+
+## 🛡 Security Checklist
+| Measure | Status |
+|---------|--------|
+| HTTPS redirect & HSTS | ✅ |
+| CSP (strict in prod, relaxed in dev) | ✅ |
+| Rate-limiting (DRF throttling scopes) | ✅ |
+| Secure cookies (`Secure`, `HttpOnly`, `SameSite=Lax`) | ✅ |
+| Password validation & bcrypt hashing | ✅ |
+| Input sanitization (bleach) | ✅ |
+| CORS credentials & trusted origins | ✅ |
+
+---
+
+## 📦 Deployment Notes
+| Provider | Notes |
+|----------|-------|
+| **Render** | `DATABASE_URL` auto-injected, set `DEBUG=False`, `ALLOWED_HOSTS` includes `*.onrender.com` |
+| **Upstash Redis** | Plug-and-play via `UPSTASH_REDIS_REST_URL` |
+| **Static Files** | Served by WhiteNoise + Gunicorn |
+| **Environment** | All secrets via Render dashboard |
+
+
+---
+
+## 📄 License
+MIT © 2025
+
+---
