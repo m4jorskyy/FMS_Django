@@ -233,3 +233,9 @@ JWT is returned in **HttpOnly cookie** (`access_token`) and validated via custom
 MIT © 2025
 
 ---
+
+## Autor
+
+**Igor Suchodolski**
+- Email: [igor.suchodolskii@gmail.com](mailto:igor.suchodolskii@gmail.com)
+- GitHub: [@m4jorskyy](https://github.com/m4jorskyy)
