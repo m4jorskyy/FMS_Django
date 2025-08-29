@@ -3,14 +3,14 @@
 A production-ready **Django REST API** that powers the FMS League of Legends portfolio site.  
 Handles authentication, player & match data, tournament statistics, content management and integrates with **Riot Games**, **Leaguepedia** and **Pandascore** APIs.
 
----
+
 
 ## 🚀 Live API
 ```bash
 https://api.fms-project.fun
 ```
 
----
+
 
 ## 📋 Table of Contents
 - [Features](#-features)
@@ -23,11 +23,11 @@ https://api.fms-project.fun
 - [Caching & Performance](#-caching--performance)
 - [Deployment Notes](#-deployment-notes)
 
----
+
 
 ## ✨ Features
 | Domain | Highlights |
-|--------|------------|
+|--||
 | **Authentication** | JWT access tokens + CSRF cookies, role-based access (USER / EDITOR / ADMIN) |
 | **Player Data** | CRUD for players, summoners, ranks, social links |
 | **Match Stats** | Solo-queue matches from Riot API, official tournament stats from Leaguepedia |
@@ -37,11 +37,11 @@ https://api.fms-project.fun
 | **Caching** | Redis-backed caching for heavy stats endpoints |
 | **Security** | CSP, HSTS, rate-limiting, secure cookies |
 
----
+
 
 ## 🛠 Tech Stack
 | Layer | Technology |
-|-------|------------|
+|-||
 | Framework | Django 5.2 + Django REST Framework |
 | Database | PostgreSQL (with SSL) |
 | Cache | Upstash Redis (prod) / LocMem (dev) |
@@ -50,7 +50,7 @@ https://api.fms-project.fun
 | External | `requests`, `mwrogue`, `bleach`, `python-dotenv` |
 | WSGI | Gunicorn + WhiteNoise |
 
----
+
 
 ## 🏗 Quick Start
 
@@ -90,7 +90,7 @@ python manage.py runserver
 ```
 API now available at `http://localhost:8000/api/`
 
----
+
 
 ## 📁 Project Structure
 ```
@@ -116,11 +116,11 @@ FMS_Django_Init/
 └── manage.py
 ```
 
----
+
 
 ## 🔐 Environment Variables
 | Variable | Purpose |
-|----------|---------|
+|-||
 | `DEBUG` | Toggle dev vs prod settings |
 | `DJANGO_SECRET_KEY` | Django signing key |
 | `DATABASE_URL` | **Optional** Render/Supabase connection string |
@@ -128,18 +128,18 @@ FMS_Django_Init/
 | `PANDASCORE_API_KEY` | Official tournament matches |
 | `UPSTASH_REDIS_REST_URL` | Redis cache (prod) |
 
----
+
 
 ## ⚙️ Management Commands
 Run these periodically (cron / GitHub Actions):
 
 | Command | Description |
-|---------|-------------|
+||-|
 | `python manage.py fetch_puuids` | Resolve Riot PUUIDs for all stored `riot_id`s |
 | `python manage.py fetch_matches` | Pull latest 20 solo-queue matches per summoner |
 | `python manage.py fetch_player_stats <nick>` | Import official stats from Leaguepedia |
 
----
+
 
 ## 📡 API Overview
 All endpoints live under `/api/`
@@ -185,29 +185,29 @@ POST /api/newsletter/
 GET /api/officialmatches/?team_id=136773&status=not_started&page=1
 ```
 
----
+
 
 ## 🔐 Authentication & Permissions
 | Role | Capabilities |
-|------|--------------|
+||--|
 | **USER** | view public data, edit own profile |
 | **EDITOR** | create/edit own posts |
 | **ADMIN** | full CRUD on users, players, posts |
 
 JWT is returned in **HttpOnly cookie** (`access_token`) and validated via custom `JWTAuthentication` class.
 
----
+
 
 ## 🚀 Caching & Performance
 - **Redis** (Upstash) in production – 1 h TTL for stats, 2 h for filter options.  
 - **LocMem** in development.  
 - Cache keys include hashed filter strings to guarantee uniqueness.
 
----
+
 
 ## 🛡 Security Checklist
 | Measure | Status |
-|---------|--------|
+||--|
 | HTTPS redirect & HSTS | ✅ |
 | CSP (strict in prod, relaxed in dev) | ✅ |
 | Rate-limiting (DRF throttling scopes) | ✅ |
@@ -216,23 +216,23 @@ JWT is returned in **HttpOnly cookie** (`access_token`) and validated via custom
 | Input sanitization (bleach) | ✅ |
 | CORS credentials & trusted origins | ✅ |
 
----
+
 
 ## 📦 Deployment Notes
 | Provider | Notes |
-|----------|-------|
+|-|-|
 | **Render** | `DATABASE_URL` auto-injected, set `DEBUG=False`, `ALLOWED_HOSTS` includes `*.onrender.com` |
 | **Upstash Redis** | Plug-and-play via `UPSTASH_REDIS_REST_URL` |
 | **Static Files** | Served by WhiteNoise + Gunicorn |
 | **Environment** | All secrets via Render dashboard |
 
 
----
+
 
 ## 📄 License
 MIT © 2025
 
----
+
 
 ## Autor
 
